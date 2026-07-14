@@ -1,0 +1,2160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Archon's Descent - Staff-Architected Roguelike</title>
+    <!-- Google Fonts: Outfit for clean UI, Press Start 2P for retro accents -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Press+Start+2P&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-base: #090d16;
+            --bg-surface: #131a2c;
+            --bg-surface-elevated: #1e2942;
+            --border-glow: #38bdf8;
+            --primary: #38bdf8;
+            --primary-glow: rgba(56, 189, 248, 0.25);
+            --accent-green: #34d399;
+            --accent-red: #fb7185;
+            --accent-orange: #fb923c;
+            --rarity-common: #94a3b8;
+            --rarity-rare: #3b82f6;
+            --rarity-epic: #a855f7;
+            --rarity-legendary: #eab308;
+            --text-main: #f8fafc;
+            --text-muted: #64748b;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-base);
+            color: var(--text-main);
+            font-family: 'Outfit', sans-serif;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            user-select: none;
+            touch-action: none;
+        }
+
+        /* Ambient background glow */
+        .ambient-glow {
+            position: absolute;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(56,189,248,0.08) 0%, rgba(0,0,0,0) 70%);
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .game-wrapper {
+            position: relative;
+            z-index: 1;
+            display: grid;
+            grid-template-columns: auto 340px;
+            gap: 24px;
+            max-width: 900px;
+            width: 100%;
+            padding: 16px;
+            background: rgba(19, 26, 44, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            backdrop-filter: blur(16px);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8),
+                        inset 0 1px 0 0 rgba(255, 255, 255, 0.05);
+        }
+
+        /* Left Column: Game View */
+        .game-view-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .game-header {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 4px 8px;
+        }
+
+        .title-area h1 {
+            font-family: 'Press Start 2P', monospace;
+            font-size: 11px;
+            color: var(--text-main);
+            letter-spacing: 1.5px;
+            text-shadow: 0 0 10px var(--primary-glow);
+            margin-bottom: 6px;
+        }
+
+        .depth-indicator {
+            font-size: 13px;
+            font-weight: 800;
+            color: var(--primary);
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .canvas-container {
+            position: relative;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 2px solid rgba(255, 255, 255, 0.07);
+            box-shadow: 0 0 40px rgba(0,0,0,0.6);
+        }
+
+        canvas {
+            display: block;
+            image-rendering: pixelated;
+            cursor: crosshair;
+            transition: transform 0.1s ease;
+        }
+
+        /* Virtual D-pad / Mobile Controls overlay */
+        .controls-hint {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            color: var(--text-muted);
+            font-size: 12px;
+            margin-top: 4px;
+        }
+
+        .controls-hint span {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .key-cap {
+            background: var(--bg-surface-elevated);
+            color: var(--text-main);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Fira Code', monospace;
+            font-size: 10px;
+            border-bottom: 2px solid rgba(0, 0, 0, 0.4);
+        }
+
+        /* Right Column: Dashboard */
+        .dashboard {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            height: 512px;
+        }
+
+        .panel {
+            background: var(--bg-surface);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 14px;
+        }
+
+        /* Stats Panel */
+        .stats-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .progress-bar-container {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .progress-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .progress-track {
+            height: 10px;
+            background: var(--bg-base);
+            border-radius: 5px;
+            overflow: hidden;
+            position: relative;
+            border: 1px solid rgba(255,255,255,0.03);
+        }
+
+        .progress-fill {
+            height: 100%;
+            border-radius: 5px;
+            width: 100%;
+            transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .hp-fill {
+            background: linear-gradient(90deg, #f43f5e, #fda4af);
+            box-shadow: 0 0 8px rgba(244, 63, 94, 0.4);
+        }
+
+        .xp-fill {
+            background: linear-gradient(90deg, #a855f7, #c084fc);
+            box-shadow: 0 0 8px rgba(168, 85, 247, 0.4);
+        }
+
+        .stat-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-top: 4px;
+        }
+
+        .stat-badge {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(255,255,255,0.04);
+            padding: 6px 10px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .stat-badge .label {
+            font-size: 11px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        .stat-badge .value {
+            font-weight: 800;
+            font-size: 14px;
+            color: var(--primary);
+        }
+
+        /* Gear & Inventory Panel */
+        .inventory-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            flex-grow: 1;
+        }
+
+        .panel-title {
+            font-size: 11px;
+            font-family: 'Press Start 2P', monospace;
+            color: var(--text-muted);
+            letter-spacing: 0.5px;
+            margin-bottom: 2px;
+        }
+
+        .gear-slots {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+        }
+
+        .inventory-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            grid-template-rows: repeat(3, 1fr);
+            gap: 8px;
+            flex-grow: 1;
+        }
+
+        .slot {
+            aspect-ratio: 1;
+            background: var(--bg-base);
+            border: 1px dashed rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .slot:hover {
+            border-color: var(--primary);
+            background: var(--bg-surface-elevated);
+            box-shadow: 0 0 10px var(--primary-glow);
+        }
+
+        .slot.equipped-slot {
+            border-style: solid;
+        }
+
+        .slot.equipped-slot::after {
+            content: attr(data-slot-type);
+            position: absolute;
+            bottom: 2px;
+            font-size: 8px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        .item-icon {
+            font-size: 20px;
+            transition: transform 0.15s ease;
+            pointer-events: none;
+        }
+
+        .slot:hover .item-icon {
+            transform: scale(1.15);
+        }
+
+        /* Item rarity rings */
+        .rarity-common { border-color: var(--rarity-common); }
+        .rarity-rare { border-color: var(--rarity-rare); box-shadow: inset 0 0 8px rgba(59, 130, 246, 0.15); }
+        .rarity-epic { border-color: var(--rarity-epic); box-shadow: inset 0 0 8px rgba(168, 85, 247, 0.15); }
+        .rarity-legendary { border-color: var(--rarity-legendary); box-shadow: inset 0 0 12px rgba(234, 179, 8, 0.2); }
+
+        /* Combat Logs Panel */
+        .logs-panel {
+            height: 120px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .log-container {
+            flex-grow: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            font-family: 'Fira Code', monospace;
+            font-size: 11px;
+            padding-right: 4px;
+        }
+
+        .log-container::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .log-container::-webkit-scrollbar-thumb {
+            background: var(--bg-surface-elevated);
+            border-radius: 2px;
+        }
+
+        .log-msg {
+            line-height: 1.4;
+            animation: fadeIn 0.2s ease-out;
+        }
+
+        .log-system { color: var(--text-muted); }
+        .log-combat-player { color: var(--accent-green); }
+        .log-combat-enemy { color: var(--accent-red); }
+        .log-loot { color: var(--rarity-legendary); }
+        .log-level { color: var(--primary); font-weight: 600; }
+
+        /* Action Buttons overlay */
+        .action-bar {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn {
+            flex-grow: 1;
+            background: var(--bg-surface-elevated);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 8px;
+            color: var(--text-main);
+            font-family: 'Outfit', sans-serif;
+            font-weight: 600;
+            padding: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 12px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn:hover {
+            background: var(--primary);
+            color: var(--bg-base);
+            box-shadow: 0 0 15px var(--primary-glow);
+            border-color: transparent;
+        }
+
+        /* Overlay Screens */
+        .screen-overlay {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(9, 13, 22, 0.95);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 16px;
+            z-index: 10;
+            border-radius: 12px;
+            backdrop-filter: blur(8px);
+            opacity: 1;
+            transition: opacity 0.3s ease;
+        }
+
+        .screen-overlay.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .screen-title {
+            font-family: 'Press Start 2P', monospace;
+            font-size: 18px;
+            color: var(--text-main);
+            text-align: center;
+            line-height: 1.6;
+        }
+
+        .screen-subtitle {
+            font-size: 14px;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+
+        .glowing-btn {
+            background: var(--primary);
+            color: var(--bg-base);
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 800;
+            font-size: 14px;
+            cursor: pointer;
+            box-shadow: 0 0 20px var(--primary-glow);
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .glowing-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 30px var(--primary);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Tooltip style */
+        .tooltip {
+            position: absolute;
+            background: var(--bg-surface-elevated);
+            border: 1px solid rgba(255,255,255,0.1);
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            pointer-events: none;
+            z-index: 100;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+            max-width: 200px;
+            display: none;
+        }
+
+        .tooltip .item-name {
+            font-weight: 800;
+            margin-bottom: 4px;
+        }
+
+        .tooltip .item-stat {
+            color: var(--accent-green);
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="ambient-glow"></div>
+
+    <div class="game-wrapper">
+        <!-- Left: Game View -->
+        <div class="game-view-container">
+            <div class="game-header">
+                <div class="title-area">
+                    <h1>ARCHON'S DESCENT</h1>
+                </div>
+                <div class="depth-indicator" id="dungeon-level">DUNGEON DEPTH: B01</div>
+            </div>
+            
+            <div class="canvas-container" id="canvas-container">
+                <!-- Overlay Start Screen -->
+                <div class="screen-overlay" id="start-overlay">
+                    <div class="screen-title" style="color: var(--primary);">ARCHON'S DESCENT</div>
+                    <div class="screen-subtitle">Procedural Space-Carved Roguelike</div>
+                    <button class="glowing-btn" id="start-btn">Enter Dungeon</button>
+                </div>
+
+                <!-- Overlay Death Screen -->
+                <div class="screen-overlay hidden" id="death-overlay">
+                    <div class="screen-title" style="color: var(--accent-red);">DIED IN THE DARK</div>
+                    <div class="screen-subtitle" id="death-stats">You reached Depth B01</div>
+                    <button class="glowing-btn" id="restart-btn">Descend Again</button>
+                </div>
+
+                <canvas id="gameCanvas" width="512" height="512"></canvas>
+            </div>
+
+            <div class="controls-hint">
+                <span><span class="key-cap">W</span><span class="key-cap">A</span><span class="key-cap">S</span><span class="key-cap">D</span> / Arrows to Move</span>
+                <span>•</span>
+                <span><span class="key-cap">L-Click</span> Floor to Pathfind</span>
+            </div>
+        </div>
+
+        <!-- Right: Dashboard -->
+        <div class="dashboard">
+            <!-- Stats -->
+            <div class="panel stats-panel">
+                <div class="progress-bar-container">
+                    <div class="progress-label">
+                        <span>VITALITY (HP)</span>
+                        <span id="hp-value">100 / 100</span>
+                    </div>
+                    <div class="progress-track">
+                        <div class="progress-fill hp-fill" id="hp-bar" style="width: 100%"></div>
+                    </div>
+                </div>
+
+                <div class="progress-bar-container">
+                    <div class="progress-label">
+                        <span>RESONANCE (XP)</span>
+                        <span id="xp-value">0 / 100</span>
+                    </div>
+                    <div class="progress-track">
+                        <div class="progress-fill xp-fill" id="xp-bar" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <div class="stat-grid">
+                    <div class="stat-badge">
+                        <span class="label">ATK</span>
+                        <span class="value" id="atk-value">10</span>
+                    </div>
+                    <div class="stat-badge">
+                        <span class="label">DEF</span>
+                        <span class="value" id="def-value">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Inventory / Equipment -->
+            <div class="panel inventory-panel">
+                <div class="panel-title">EQUIPPED GEAR</div>
+                <div class="gear-slots">
+                    <div class="slot equipped-slot" id="equip-weapon" data-slot-type="weapon">
+                        <span class="item-icon"></span>
+                    </div>
+                    <div class="slot equipped-slot" id="equip-armor" data-slot-type="armor">
+                        <span class="item-icon"></span>
+                    </div>
+                    <div class="slot equipped-slot" id="equip-shield" data-slot-type="shield">
+                        <span class="item-icon"></span>
+                    </div>
+                    <div class="slot equipped-slot" id="equip-accessory" data-slot-type="accessory">
+                        <span class="item-icon"></span>
+                    </div>
+                </div>
+
+                <div class="panel-title" style="margin-top: 10px;">INVENTORY BAG</div>
+                <div class="inventory-grid" id="inventory-grid">
+                    <!-- 12 slots populated dynamically -->
+                    <div class="slot" data-index="0"></div>
+                    <div class="slot" data-index="1"></div>
+                    <div class="slot" data-index="2"></div>
+                    <div class="slot" data-index="3"></div>
+                    <div class="slot" data-index="4"></div>
+                    <div class="slot" data-index="5"></div>
+                    <div class="slot" data-index="6"></div>
+                    <div class="slot" data-index="7"></div>
+                    <div class="slot" data-index="8"></div>
+                    <div class="slot" data-index="9"></div>
+                    <div class="slot" data-index="10"></div>
+                    <div class="slot" data-index="11"></div>
+                </div>
+            </div>
+
+            <!-- Real-time Combat Ticker -->
+            <div class="panel logs-panel">
+                <div class="panel-title">CHRONICLES OF RUNES</div>
+                <div class="log-container" id="log-container">
+                    <div class="log-msg log-system">System: Welcome to Archon's Descent.</div>
+                </div>
+            </div>
+
+            <div class="action-bar">
+                <button class="btn" id="mute-btn">
+                    <span>🔊</span> Mute SFX
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Live Tooltip -->
+    <div class="tooltip" id="game-tooltip">
+        <div class="item-name" id="tooltip-name">Sword</div>
+        <div class="item-stat" id="tooltip-stat">+5 ATK</div>
+    </div>
+
+<script>
+// ============================================================================
+// --- SYNTHESIZED WEB AUDIO ENGINE ---
+// ============================================================================
+class SoundEngine {
+    constructor() {
+        this.ctx = null;
+        this.muted = false;
+    }
+
+    init() {
+        if (this.ctx) return;
+        this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+
+    playTone(freq, type, duration, volume, sweepFreq = null) {
+        if (this.muted) return;
+        this.init();
+        if (!this.ctx) return;
+
+        const osc = this.ctx.createOscillator();
+        const gainNode = this.ctx.createGain();
+
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+        if (sweepFreq !== null) {
+            osc.frequency.exponentialRampToValueAtTime(sweepFreq, this.ctx.currentTime + duration);
+        }
+
+        gainNode.gain.setValueAtTime(volume, this.ctx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + duration);
+
+        osc.connect(gainNode);
+        gainNode.connect(this.ctx.destination);
+
+        osc.start();
+        osc.stop(this.ctx.currentTime + duration);
+    }
+
+    playNoise(duration, volume, sweep = false) {
+        if (this.muted) return;
+        this.init();
+        if (!this.ctx) return;
+
+        const bufferSize = this.ctx.sampleRate * duration;
+        const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+
+        for (let i = 0; i < bufferSize; i++) {
+            data[i] = Math.random() * 2 - 1;
+        }
+
+        const noiseNode = this.ctx.createBufferSource();
+        noiseNode.buffer = buffer;
+
+        const filter = this.ctx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(sweep ? 1000 : 400, this.ctx.currentTime);
+        if (sweep) {
+            filter.frequency.exponentialRampToValueAtTime(100, this.ctx.currentTime + duration);
+        }
+
+        const gainNode = this.ctx.createGain();
+        gainNode.gain.setValueAtTime(volume, this.ctx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + duration);
+
+        noiseNode.connect(filter);
+        filter.connect(gainNode);
+        gainNode.connect(this.ctx.destination);
+
+        noiseNode.start();
+        noiseNode.stop(this.ctx.currentTime + duration);
+    }
+
+    playStep() {
+        this.playNoise(0.06, 0.03);
+    }
+
+    playHit() {
+        this.playTone(300, 'triangle', 0.12, 0.15, 80);
+        this.playNoise(0.1, 0.08);
+    }
+
+    playHurt() {
+        this.playTone(180, 'sawtooth', 0.25, 0.25, 40);
+        this.playNoise(0.2, 0.15, true);
+    }
+
+    playLoot() {
+        const now = this.ctx ? this.ctx.currentTime : 0;
+        this.playTone(261.63, 'sine', 0.08, 0.1); // C4
+        setTimeout(() => this.playTone(329.63, 'sine', 0.08, 0.1), 80); // E4
+        setTimeout(() => this.playTone(392.00, 'sine', 0.08, 0.1), 160); // G4
+        setTimeout(() => this.playTone(523.25, 'sine', 0.2, 0.15), 240); // C5
+    }
+
+    playLevelUp() {
+        const notes = [261.63, 329.63, 392.00, 523.25, 659.25, 783.99, 1046.50];
+        notes.forEach((freq, index) => {
+            setTimeout(() => {
+                this.playTone(freq, 'triangle', 0.15, 0.12);
+            }, index * 60);
+        });
+    }
+
+    playDefeat() {
+        const notes = [293.66, 277.18, 261.63, 220.00];
+        notes.forEach((freq, index) => {
+            setTimeout(() => {
+                this.playTone(freq, 'sawtooth', 0.3, 0.2);
+            }, index * 180);
+        });
+    }
+
+    playVictory() {
+        const notes = [523.25, 659.25, 783.99, 523.25, 783.99, 1046.50];
+        notes.forEach((freq, index) => {
+            setTimeout(() => {
+                this.playTone(freq, 'sine', 0.2, 0.15);
+            }, index * 100);
+        });
+    }
+}
+
+const sfx = new SoundEngine();
+
+// ============================================================================
+// --- A* PATHFINDING ALGORITHM ---
+// ============================================================================
+class AStar {
+    static findPath(map, width, height, start, end) {
+        const openSet = [];
+        const closedSet = new Set();
+
+        const startNode = {
+            x: start.x,
+            y: start.y,
+            g: 0,
+            h: this.heuristic(start, end),
+            f: 0,
+            parent: null
+        };
+        startNode.f = startNode.g + startNode.h;
+        openSet.push(startNode);
+
+        while (openSet.length > 0) {
+            let lowestIdx = 0;
+            for (let i = 1; i < openSet.length; i++) {
+                if (openSet[i].f < openSet[lowestIdx].f) {
+                    lowestIdx = i;
+                }
+            }
+            const current = openSet[lowestIdx];
+
+            if (current.x === end.x && current.y === end.y) {
+                const path = [];
+                let curr = current;
+                while (curr !== null) {
+                    path.push({ x: curr.x, y: curr.y });
+                    curr = curr.parent;
+                }
+                return path.reverse().slice(1); // Return path excluding the start node
+            }
+
+            openSet.splice(lowestIdx, 1);
+            closedSet.add(`${current.x},${current.y}`);
+
+            const neighbors = [
+                { x: current.x + 1, y: current.y },
+                { x: current.x - 1, y: current.y },
+                { x: current.x, y: current.y + 1 },
+                { x: current.x, y: current.y - 1 }
+            ];
+
+            for (const neighbor of neighbors) {
+                if (neighbor.x < 0 || neighbor.x >= width || neighbor.y < 0 || neighbor.y >= height) continue;
+                if (map[neighbor.y][neighbor.x] === 0) continue; // Wall check
+                if (closedSet.has(`${neighbor.x},${neighbor.y}`)) continue;
+
+                const gScore = current.g + 1;
+                let neighborNode = openSet.find(n => n.x === neighbor.x && n.y === neighbor.y);
+
+                if (!neighborNode) {
+                    neighborNode = {
+                        x: neighbor.x,
+                        y: neighbor.y,
+                        g: gScore,
+                        h: this.heuristic(neighbor, end),
+                        f: 0,
+                        parent: current
+                    };
+                    neighborNode.f = neighborNode.g + neighborNode.h;
+                    openSet.push(neighborNode);
+                } else if (gScore < neighborNode.g) {
+                    neighborNode.g = gScore;
+                    neighborNode.f = neighborNode.g + neighborNode.h;
+                    neighborNode.parent = current;
+                }
+            }
+        }
+        return []; // No path found
+    }
+
+    static heuristic(a, b) {
+        return Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
+    }
+}
+
+// ============================================================================
+// --- TEXTURE CACHE COMPONENT ---
+// ============================================================================
+class TextureCache {
+    constructor(tileSize) {
+        this.tileSize = tileSize;
+        this.floorCanvas = this.createFloorCanvas();
+        this.wallCanvas = this.createWallCanvas();
+    }
+
+    createFloorCanvas() {
+        const c = document.createElement('canvas');
+        c.width = this.tileSize * 4;
+        c.height = this.tileSize;
+        const ctx = c.getContext('2d');
+
+        // Draw 4 floor variants
+        for (let i = 0; i < 4; i++) {
+            const ox = i * this.tileSize;
+            ctx.fillStyle = '#1e293b';
+            ctx.fillRect(ox, 0, this.tileSize, this.tileSize);
+
+            // Shading grid outlines
+            ctx.strokeStyle = '#0f172a';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(ox, 0, this.tileSize, this.tileSize);
+
+            // Add stone grain cracks
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.04)';
+            ctx.beginPath();
+            if (i === 1) { // Crack layout
+                ctx.moveTo(ox + 4, 8); ctx.lineTo(ox + 16, 20); ctx.lineTo(ox + 28, 14);
+            } else if (i === 2) {
+                ctx.moveTo(ox + 8, 24); ctx.lineTo(ox + 20, 10);
+            } else if (i === 3) { // Mossy floor speckles
+                ctx.fillStyle = 'rgba(52, 211, 153, 0.08)';
+                ctx.fillRect(ox + 8, 8, 4, 4);
+                ctx.fillRect(ox + 20, 18, 6, 4);
+            }
+            ctx.stroke();
+        }
+        return c;
+    }
+
+    createWallCanvas() {
+        const c = document.createElement('canvas');
+        c.width = this.tileSize * 3;
+        c.height = this.tileSize;
+        const ctx = c.getContext('2d');
+
+        // Draw 3 wall variants
+        for (let i = 0; i < 3; i++) {
+            const ox = i * this.tileSize;
+            // Primary brick color
+            ctx.fillStyle = '#0f172a';
+            ctx.fillRect(ox, 0, this.tileSize, this.tileSize);
+
+            ctx.fillStyle = '#1e293b';
+            ctx.fillRect(ox + 2, 2, this.tileSize - 4, this.tileSize - 4);
+
+            // Inner stone outline
+            ctx.strokeStyle = '#334155';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(ox + 2, 2, this.tileSize - 4, this.tileSize - 4);
+
+            // Brick cuts
+            ctx.strokeStyle = '#0f172a';
+            ctx.beginPath();
+            ctx.moveTo(ox + this.tileSize / 2, 2);
+            ctx.lineTo(ox + this.tileSize / 2, this.tileSize - 2);
+            ctx.moveTo(ox + 2, this.tileSize / 2);
+            ctx.lineTo(ox + this.tileSize - 2, this.tileSize / 2);
+            ctx.stroke();
+
+            // Rarity detail on some blocks
+            if (i === 1) {
+                ctx.fillStyle = 'rgba(56, 189, 248, 0.15)';
+                ctx.fillRect(ox + 4, 4, 8, 8);
+            } else if (i === 2) {
+                ctx.strokeStyle = 'rgba(251, 113, 133, 0.1)';
+                ctx.beginPath();
+                ctx.moveTo(ox + 4, 24); ctx.lineTo(ox + 24, 4);
+                ctx.stroke();
+            }
+        }
+        return c;
+    }
+}
+
+// ============================================================================
+// --- MAIN ROGUELIKE DUNGEON ENGINE ---
+// ============================================================================
+class DungeonEngine {
+    constructor() {
+        this.canvas = document.getElementById('gameCanvas');
+        this.ctx = this.canvas.getContext('2d');
+        this.ctx.imageSmoothingEnabled = false;
+
+        this.tileSize = 32;
+        this.mapWidth = 60;
+        this.mapHeight = 60;
+        this.viewWidth = this.canvas.width / this.tileSize;
+        this.viewHeight = this.canvas.height / this.tileSize;
+
+        this.textures = new TextureCache(this.tileSize);
+        
+        // Gameplay Core Settings
+        this.level = 1;
+        this.score = 0;
+        this.player = null;
+        this.enemies = [];
+        this.chests = [];
+        this.itemsOnGround = [];
+        this.torches = [];
+        this.stairs = null; // Exit down stairs
+
+        // Map grids
+        this.map = []; // 0 = Wall, 1 = Floor, 2 = Stairs Up, 3 = Stairs Down
+        this.fog = []; // 0 = Unexplored, 1 = Discovered, 2 = Visible
+        this.tileVariants = []; // Holds deterministic variance mapping integers
+
+        // Interactive systems
+        this.particles = [];
+        this.cameraShake = { duration: 0, intensity: 0 };
+        this.autoMoveTimer = null;
+        this.hoveredItem = null;
+
+        // Inventory bag details
+        this.inventory = Array(12).fill(null);
+        this.equipped = {
+            weapon: null,
+            armor: null,
+            shield: null,
+            accessory: null
+        };
+
+        this.initDOM();
+        this.bindInput();
+        this.showStartScreen();
+    }
+
+    initDOM() {
+        this.hpBar = document.getElementById('hp-bar');
+        this.hpValue = document.getElementById('hp-value');
+        this.xpBar = document.getElementById('xp-bar');
+        this.xpValue = document.getElementById('xp-value');
+        this.atkValue = document.getElementById('atk-value');
+        this.defValue = document.getElementById('def-value');
+        this.dungeonLevel = document.getElementById('dungeon-level');
+        this.logContainer = document.getElementById('log-container');
+
+        // Setup empty inventory slots in DOM
+        this.updateInventoryUI();
+    }
+
+    showStartScreen() {
+        document.getElementById('start-overlay').classList.remove('hidden');
+    }
+
+    startGame() {
+        document.getElementById('start-overlay').classList.add('hidden');
+        document.getElementById('death-overlay').classList.add('hidden');
+        
+        // Clear variables
+        this.level = 1;
+        this.inventory = Array(12).fill(null);
+        this.equipped = { weapon: null, armor: null, shield: null, accessory: null };
+        this.player = {
+            x: 0, y: 0,
+            visualX: 0, visualY: 0,
+            hp: 100, maxHp: 100,
+            xp: 0, xpNeeded: 100,
+            lvl: 1,
+            baseAtk: 10, baseDef: 0,
+            fovRadius: 6,
+            path: []
+        };
+
+        // Give player a starter weapon
+        this.inventory[0] = {
+            id: 'item_start_sword',
+            name: 'Rusty Broadsword',
+            type: 'weapon',
+            rarity: 'common',
+            statBonus: 3,
+            icon: '🗡️'
+        };
+
+        this.generateLevel();
+        sfx.playVictory();
+        
+        // Boot standard request animation frame loop
+        if (!this.loopStarted) {
+            this.loopStarted = true;
+            this.gameLoop();
+        }
+    }
+
+    // --- PROCEDURAL GENERATION: CARVING + CORRIDORS ---
+    generateLevel() {
+        this.enemies = [];
+        this.chests = [];
+        this.itemsOnGround = [];
+        this.torches = [];
+        this.particles = [];
+        this.player.path = [];
+
+        // Reset grids
+        this.map = Array(this.mapHeight).fill().map(() => Array(this.mapWidth).fill(0));
+        this.fog = Array(this.mapHeight).fill().map(() => Array(this.mapWidth).fill(0));
+        
+        // Fill tile variants deterministically
+        this.tileVariants = Array(this.mapHeight).fill().map(() => 
+            Array(this.mapWidth).fill(0).map(() => Math.floor(Math.random() * 100))
+        );
+
+        const rooms = [];
+        const minSize = 6;
+        const maxSize = 12;
+        const maxRooms = 15;
+
+        for (let i = 0; i < maxRooms; i++) {
+            let w = Math.floor(Math.random() * (maxSize - minSize + 1)) + minSize;
+            let h = Math.floor(Math.random() * (maxSize - minSize + 1)) + minSize;
+            let x = Math.floor(Math.random() * (this.mapWidth - w - 2)) + 1;
+            let y = Math.floor(Math.random() * (this.mapHeight - h - 2)) + 1;
+
+            let overlap = rooms.some(r => x < r.x + r.w && x + w > r.x && y < r.y + r.h && y + h > r.y);
+            if (overlap) continue;
+
+            // Carve floor
+            for (let rx = x; rx < x + w; rx++) {
+                for (let ry = y; ry < y + h; ry++) {
+                    this.map[ry][rx] = 1;
+                }
+            }
+
+            const currentRoom = { x, y, w, h, cx: Math.floor(x + w / 2), cy: Math.floor(y + h / 2) };
+
+            // Connect using corridors
+            if (rooms.length > 0) {
+                const prevRoom = rooms[rooms.length - 1];
+                this.carveCorridor(prevRoom.cx, prevRoom.cy, currentRoom.cx, currentRoom.cy);
+            }
+
+            rooms.push(currentRoom);
+        }
+
+        // Spawn player in the first room
+        this.player.x = rooms[0].cx;
+        this.player.y = rooms[0].cy;
+        this.player.visualX = rooms[0].cx;
+        this.player.visualY = rooms[0].cy;
+
+        // Spawn stairs down in the last room
+        const lastRoom = rooms[rooms.length - 1];
+        this.stairs = { x: lastRoom.cx, y: lastRoom.cy };
+        this.map[this.stairs.y][this.stairs.x] = 3; // Stairs Down tile ID
+
+        // Spawn torches dynamically in rooms
+        rooms.forEach(r => {
+            // Torches on corners
+            this.spawnTorchAt(r.x, r.y - 1);
+            this.spawnTorchAt(r.x + r.w - 1, r.y - 1);
+
+            // Enemies (scaled by level)
+            if (r !== rooms[0]) {
+                const spawnChance = 0.6 + (this.level * 0.05);
+                if (Math.random() < spawnChance) {
+                    this.spawnEnemy(r.cx, r.cy);
+                }
+                // Chests
+                if (Math.random() < 0.4) {
+                    this.spawnChest(r.x + 1 + Math.floor(Math.random() * (r.w - 2)), r.y + 1 + Math.floor(Math.random() * (r.h - 2)));
+                }
+            }
+        });
+
+        this.updateFOV();
+        this.updateStatsUI();
+        this.updateInventoryUI();
+        this.dungeonLevel.innerText = `DUNGEON DEPTH: B${this.level.toString().padStart(2, '0')}`;
+        this.logMessage(`Descended to dungeon depth B${this.level}. Atmosphere grows heavier...`, 'log-system');
+    }
+
+    carveCorridor(x1, y1, x2, y2) {
+        // Horizontal
+        let startX = Math.min(x1, x2), endX = Math.max(x1, x2);
+        for (let x = startX; x <= endX; x++) this.map[y1][x] = 1;
+
+        // Vertical
+        let startY = Math.min(y1, y2), endY = Math.max(y1, y2);
+        for (let y = startY; y <= endY; y++) this.map[y][x2] = 1;
+    }
+
+    spawnTorchAt(x, y) {
+        if (x >= 0 && x < this.mapWidth && y >= 0 && y < this.mapHeight) {
+            if (this.map[y][x] === 0) { // Must be a wall
+                this.torches.push({ x, y, flickerPhase: Math.random() * Math.PI * 2 });
+            }
+        }
+    }
+
+    spawnEnemy(x, y) {
+        // Types scaling with depth level
+        const roll = Math.random() + (this.level * 0.1);
+        let name = 'Goblin Scout';
+        let hp = 20 + (this.level * 5);
+        let atk = 6 + (this.level * 2);
+        let def = 0 + this.level;
+        let xpReward = 20 + (this.level * 10);
+        let icon = '👹';
+        let color = '#fb7185';
+
+        if (roll > 1.2) {
+            name = 'Draconic Archon';
+            hp = 60 + (this.level * 10);
+            atk = 15 + (this.level * 4);
+            def = 4 + this.level;
+            xpReward = 80 + (this.level * 25);
+            icon = '🐉';
+            color = '#fb923c';
+        } else if (roll > 0.8) {
+            name = 'Savage Orc';
+            hp = 35 + (this.level * 8);
+            atk = 10 + (this.level * 3);
+            def = 2 + this.level;
+            xpReward = 45 + (this.level * 15);
+            icon = '👺';
+            color = '#a7f3d0';
+        }
+
+        this.enemies.push({
+            x, y,
+            visualX: x, visualY: y,
+            name, hp, maxHp: hp, atk, def, xpReward, icon, color,
+            lastAttackTime: 0
+        });
+    }
+
+    spawnChest(x, y) {
+        // Ensure chest doesn't spawn on stairs down
+        if (x === this.stairs.x && y === this.stairs.y) return;
+        this.chests.push({ x, y, opened: false });
+    }
+
+    // --- RAYCAST FOV SHADOWCAST ---
+    updateFOV() {
+        // Demote previous FOV cells back to explored (1)
+        for (let y = 0; y < this.mapHeight; y++) {
+            for (let x = 0; x < this.mapWidth; x++) {
+                if (this.fog[y][x] === 2) this.fog[y][x] = 1;
+            }
+        }
+
+        const px = this.player.x;
+        const py = this.player.y;
+        this.fog[py][px] = 2; // Center player cell always visible
+
+        const radius = this.player.fovRadius;
+        const rays = 144; // Total radial checks
+
+        for (let i = 0; i < rays; i++) {
+            const angle = (i / rays) * Math.PI * 2;
+            const dx = Math.cos(angle);
+            const dy = Math.sin(angle);
+
+            let rx = px + 0.5;
+            let ry = py + 0.5;
+
+            for (let step = 0; step < radius; step += 0.25) {
+                const tx = Math.floor(rx);
+                const ty = Math.floor(ry);
+
+                if (tx < 0 || tx >= this.mapWidth || ty < 0 || ty >= this.mapHeight) break;
+
+                this.fog[ty][tx] = 2; // Visited/Illuminated
+
+                // Block further vision if it's solid Wall (0)
+                if (this.map[ty][tx] === 0) {
+                    break;
+                }
+
+                rx += dx * 0.25;
+                ry += dy * 0.25;
+            }
+        }
+    }
+
+    // --- ACTIONS AND TURN MECHANICS ---
+    executeTurn(dx, dy) {
+        // Clear click-to-move paths if user inputs key movement overrides
+        if (this.player.path.length > 0) {
+            this.player.path = [];
+        }
+
+        const newX = this.player.x + dx;
+        const newY = this.player.y + dy;
+
+        this.processAction(newX, newY);
+    }
+
+    processAction(targetX, targetY) {
+        // Collision checks
+        if (targetX < 0 || targetX >= this.mapWidth || targetY < 0 || targetY >= this.mapHeight) return false;
+
+        // 1. Wall block
+        if (this.map[targetY][targetX] === 0) return false;
+
+        // 2. Enemy combat check
+        let enemyIndex = this.enemies.findIndex(e => e.x === targetX && e.y === targetY);
+        if (enemyIndex !== -1) {
+            this.combatRound(enemyIndex);
+            this.postTurnSystems();
+            return true;
+        }
+
+        // 3. Chest check
+        let chestIndex = this.chests.findIndex(c => c.x === targetX && c.y === targetY && !c.opened);
+        if (chestIndex !== -1) {
+            this.openChest(chestIndex);
+            this.postTurnSystems();
+            return true;
+        }
+
+        // 4. Ground Loot items check
+        let lootIndex = this.itemsOnGround.findIndex(i => i.x === targetX && i.y === targetY);
+        if (lootIndex !== -1) {
+            this.pickupItem(lootIndex);
+            this.postTurnSystems();
+            return true;
+        }
+
+        // 5. Stairs down check
+        if (targetX === this.stairs.x && targetY === this.stairs.y) {
+            this.level++;
+            sfx.playVictory();
+            this.generateLevel();
+            return true;
+        }
+
+        // Standard movement
+        this.player.x = targetX;
+        this.player.y = targetY;
+        sfx.playStep();
+
+        this.postTurnSystems();
+        return true;
+    }
+
+    postTurnSystems() {
+        this.processEnemyAI();
+        this.updateFOV();
+        this.updateStatsUI();
+    }
+
+    combatRound(enemyIdx) {
+        const enemy = this.enemies[enemyIdx];
+        
+        // Player attacks enemy
+        const dmgToEnemy = Math.max(1, this.getPlayerAttack() - enemy.def);
+        enemy.hp -= dmgToEnemy;
+        sfx.playHit();
+        this.triggerCameraShake(4, 100);
+
+        // Splatter blood sparks
+        this.spawnBloodParticles(enemy.x, enemy.y, '#fb7185');
+        this.spawnDamageNumber(enemy.x, enemy.y, `-${dmgToEnemy}`, '#fb7185');
+
+        this.logMessage(`You strike ${enemy.name} for ${dmgToEnemy} damage.`, 'log-combat-player');
+
+        // Check death
+        if (enemy.hp <= 0) {
+            this.logMessage(`You vanquished ${enemy.name}! (+${enemy.xpReward} XP)`, 'log-level');
+            this.player.xp += enemy.xpReward;
+            
+            // Drop chance loot
+            if (Math.random() < 0.5) {
+                this.dropLootAt(enemy.x, enemy.y);
+            }
+
+            this.enemies.splice(enemyIdx, 1);
+            this.checkLevelUp();
+        }
+    }
+
+    processEnemyAI() {
+        this.enemies.forEach(enemy => {
+            const dist = Math.hypot(this.player.x - enemy.x, this.player.y - enemy.y);
+
+            // Aggro path range limits
+            if (dist <= 6) {
+                if (dist <= 1.5) {
+                    // Attack Player
+                    const playerDef = this.getPlayerDefense();
+                    const dmgToPlayer = Math.max(1, enemy.atk - playerDef);
+                    this.player.hp = Math.max(0, this.player.hp - dmgToPlayer);
+                    
+                    sfx.playHurt();
+                    this.triggerCameraShake(8, 200);
+                    this.spawnBloodParticles(this.player.x, this.player.y, '#fb7185');
+                    this.spawnDamageNumber(this.player.x, this.player.y, `-${dmgToPlayer}`, '#fb7185');
+
+                    this.logMessage(`${enemy.name} hits you for ${dmgToPlayer} damage!`, 'log-combat-enemy');
+                    
+                    if (this.player.hp <= 0) {
+                        this.handleGameOver();
+                    }
+                } else {
+                    // Move using A* pathfinding towards player
+                    const path = AStar.findPath(this.map, this.mapWidth, this.mapHeight, enemy, this.player);
+                    if (path.length > 0) {
+                        const nextStep = path[0];
+                        // Verify tile is not occupied by another enemy
+                        const collidesEnemy = this.enemies.some(e => e !== enemy && e.x === nextStep.x && e.y === nextStep.y);
+                        const collidesPlayer = (this.player.x === nextStep.x && this.player.y === nextStep.y);
+                        
+                        if (!collidesEnemy && !collidesPlayer) {
+                            enemy.x = nextStep.x;
+                            enemy.y = nextStep.y;
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    checkLevelUp() {
+        if (this.player.xp >= this.player.xpNeeded) {
+            this.player.xp -= this.player.xpNeeded;
+            this.player.lvl++;
+            this.player.xpNeeded = Math.floor(this.player.xpNeeded * 1.5);
+            this.player.maxHp += 15;
+            this.player.hp = this.player.maxHp;
+            this.player.baseAtk += 4;
+            this.player.baseDef += 1;
+
+            sfx.playLevelUp();
+            this.spawnLevelUpParticles();
+            this.spawnDamageNumber(this.player.x, this.player.y, 'LEVEL UP!', '#eab308');
+            this.logMessage(`LEVEL UP! You reached Level ${this.player.lvl}! Health restored, stats increased!`, 'log-level');
+        }
+    }
+
+    openChest(chestIdx) {
+        const chest = this.chests[chestIdx];
+        chest.opened = true;
+        sfx.playLoot();
+
+        this.spawnGoldSparkles(chest.x, chest.y);
+        
+        // Spawn procedural item drops
+        const item = this.generateProceduralItem();
+        this.logMessage(`You opened a chest and discovered: ${item.name} (${item.rarity.toUpperCase()})!`, 'log-loot');
+
+        // Add to inventory
+        const added = this.addItemToInventory(item);
+        if (!added) {
+            // Drop on ground if bag is full
+            item.x = chest.x;
+            item.y = chest.y;
+            this.itemsOnGround.push(item);
+            this.logMessage(`Inventory bag full! Item dropped on the floor.`, 'log-system');
+        }
+    }
+
+    dropLootAt(x, y) {
+        const item = this.generateProceduralItem();
+        item.x = x;
+        item.y = y;
+        this.itemsOnGround.push(item);
+        this.spawnGoldSparkles(x, y);
+    }
+
+    pickupItem(lootIdx) {
+        const item = this.itemsOnGround[lootIdx];
+        const added = this.addItemToInventory(item);
+        if (added) {
+            sfx.playLoot();
+            this.itemsOnGround.splice(lootIdx, 1);
+            this.logMessage(`Picked up: ${item.name}`, 'log-loot');
+        } else {
+            this.logMessage(`Cannot pickup. Your inventory bag is full!`, 'log-system');
+        }
+    }
+
+    handleGameOver() {
+        sfx.playDefeat();
+        document.getElementById('death-stats').innerText = `You descended to Depth B${this.level.toString().padStart(2, '0')}`;
+        document.getElementById('death-overlay').classList.remove('hidden');
+    }
+
+    // --- PROCEDURAL GEAR BUILDERS ---
+    generateProceduralItem() {
+        const rarities = [
+            { id: 'common', weight: 0.60, color: '--rarity-common' },
+            { id: 'rare', weight: 0.25, color: '--rarity-rare' },
+            { id: 'epic', weight: 0.12, color: '--rarity-epic' },
+            { id: 'legendary', weight: 0.03, color: '--rarity-legendary' }
+        ];
+
+        // Random roll
+        let rRoll = Math.random();
+        let rarity = rarities[0];
+        let accWeight = 0;
+        for (const r of rarities) {
+            accWeight += r.weight;
+            if (rRoll <= accWeight) {
+                rarity = r;
+                break;
+            }
+        }
+
+        const itemTypes = ['weapon', 'armor', 'shield', 'accessory'];
+        const type = itemTypes[Math.floor(Math.random() * itemTypes.length)];
+
+        // Core name databases
+        const prefixes = {
+            common: ['Worn', 'Broken', 'Rusty', 'Plain', 'Dull'],
+            rare: ['Polished', 'Sharpened', 'Hardened', 'Steadfast', 'Gleaming'],
+            epic: ['Shadowed', 'Runic', 'Eldritch', 'Obsidian', 'Astral'],
+            legendary: ['Archon\'s', 'Celestial', 'Cataclysmic', 'Voidbound', 'Infinity']
+        };
+
+        const suffixes = {
+            weapon: ['Sword', 'Blade', 'Dagger', 'Mace', 'Axe'],
+            armor: ['Plate', 'Mail', 'Robe', 'Tunic', 'Garments'],
+            shield: ['Shield', 'Buckler', 'Aegis', 'Guard', 'Ward'],
+            accessory: ['Ring', 'Amulet', 'Pendant', 'Sigil', 'Band']
+        };
+
+        const icons = {
+            weapon: '🗡️',
+            armor: '👕',
+            shield: '🛡️',
+            accessory: '💍'
+        };
+
+        const pref = prefixes[rarity.id][Math.floor(Math.random() * prefixes[rarity.id].length)];
+        const suf = suffixes[type][Math.floor(Math.random() * suffixes[type].length)];
+        const name = `${pref} ${suf}`;
+
+        // Buff calculations based on rarity + depth
+        let mult = 1;
+        if (rarity.id === 'rare') mult = 2;
+        if (rarity.id === 'epic') mult = 4;
+        if (rarity.id === 'legendary') mult = 8;
+
+        const statBonus = Math.floor(Math.random() * 3 + 1) * mult + Math.floor(this.level * 0.5);
+
+        return {
+            id: `item_${Math.random().toString(36).substr(2, 9)}`,
+            name,
+            type,
+            rarity: rarity.id,
+            statBonus,
+            icon: icons[type]
+        };
+    }
+
+    // --- INVENTORY MANAGEMENT ENGINE ---
+    addItemToInventory(item) {
+        for (let i = 0; i < this.inventory.length; i++) {
+            if (this.inventory[i] === null) {
+                this.inventory[i] = item;
+                this.updateInventoryUI();
+                return true;
+            }
+        }
+        return false;
+    }
+
+    equipItem(index) {
+        const item = this.inventory[index];
+        if (!item) return;
+
+        const type = item.type;
+        const currentEquipped = this.equipped[type];
+
+        // Swap equipment
+        this.equipped[type] = item;
+        this.inventory[index] = currentEquipped;
+
+        // Apply accessories updates (Ring of FOV adjustments)
+        if (type === 'accessory') {
+            this.player.fovRadius = 6 + Math.floor(item.statBonus / 2);
+        }
+
+        sfx.playLoot();
+        this.logMessage(`Equipped: ${item.name}`, 'log-system');
+        this.updateInventoryUI();
+        this.updateStatsUI();
+        this.updateFOV();
+    }
+
+    unequipItem(slotType) {
+        const item = this.equipped[slotType];
+        if (!item) return;
+
+        // Put back in inventory
+        const added = this.addItemToInventory(item);
+        if (added) {
+            this.equipped[slotType] = null;
+            if (slotType === 'accessory') {
+                this.player.fovRadius = 6;
+            }
+            sfx.playLoot();
+            this.logMessage(`Unequipped: ${item.name}`, 'log-system');
+            this.updateInventoryUI();
+            this.updateStatsUI();
+            this.updateFOV();
+        } else {
+            this.logMessage(`Cannot unequip. Inventory bag is full!`, 'log-system');
+        }
+    }
+
+    getPlayerAttack() {
+        let weaponAtk = this.equipped.weapon ? this.equipped.weapon.statBonus : 0;
+        let shieldAtk = this.equipped.shield ? Math.floor(this.equipped.shield.statBonus * 0.25) : 0;
+        return this.player.baseAtk + weaponAtk + shieldAtk;
+    }
+
+    getPlayerDefense() {
+        let armorDef = this.equipped.armor ? this.equipped.armor.statBonus : 0;
+        let shieldDef = this.equipped.shield ? this.equipped.shield.statBonus : 0;
+        return this.player.baseDef + armorDef + shieldDef;
+    }
+
+    // --- RENDER PIPELINE CONTROLS & HUD ---
+    updateStatsUI() {
+        // HP Bar
+        const hpPercent = Math.max(0, (this.player.hp / this.player.maxHp) * 100);
+        this.hpBar.style.width = `${hpPercent}%`;
+        this.hpValue.innerText = `${this.player.hp} / ${this.player.maxHp}`;
+
+        // XP Bar
+        const xpPercent = Math.max(0, (this.player.xp / this.player.xpNeeded) * 100);
+        this.xpBar.style.width = `${xpPercent}%`;
+        this.xpValue.innerText = `${this.player.xp} / ${this.player.xpNeeded}`;
+
+        // Combat totals
+        this.atkValue.innerText = this.getPlayerAttack();
+        this.defValue.innerText = this.getPlayerDefense();
+    }
+
+    updateInventoryUI() {
+        const grid = document.getElementById('inventory-grid');
+        const slots = grid.querySelectorAll('.slot');
+
+        // Render inventory slots
+        slots.forEach((slot) => {
+            const idx = parseInt(slot.getAttribute('data-index'));
+            const item = this.inventory[idx];
+
+            slot.innerHTML = '';
+            slot.className = 'slot'; // Reset classes
+
+            if (item) {
+                slot.classList.add(`rarity-${item.rarity}`);
+                const iconSpan = document.createElement('span');
+                iconSpan.className = 'item-icon';
+                iconSpan.innerText = item.icon;
+                slot.appendChild(iconSpan);
+            }
+        });
+
+        // Render equipped slots
+        const equipSlots = ['weapon', 'armor', 'shield', 'accessory'];
+        equipSlots.forEach((slotType) => {
+            const slot = document.getElementById(`equip-${slotType}`);
+            const item = this.equipped[slotType];
+
+            slot.innerHTML = '';
+            slot.className = 'slot equipped-slot'; // Reset
+            
+            if (item) {
+                slot.classList.add(`rarity-${item.rarity}`);
+                const iconSpan = document.createElement('span');
+                iconSpan.className = 'item-icon';
+                iconSpan.innerText = item.icon;
+                slot.appendChild(iconSpan);
+            }
+        });
+    }
+
+    logMessage(text, className) {
+        const msg = document.createElement('div');
+        msg.className = `log-msg ${className}`;
+        msg.innerText = `• ${text}`;
+        this.logContainer.appendChild(msg);
+
+        // Scroll to bottom
+        this.logContainer.scrollTop = this.logContainer.scrollHeight;
+    }
+
+    bindInput() {
+        const movements = {
+            'ArrowUp': { x: 0, y: -1 }, 'w': { x: 0, y: -1 }, 'W': { x: 0, y: -1 },
+            'ArrowDown': { x: 0, y: 1 }, 's': { x: 0, y: 1 }, 'S': { x: 0, y: 1 },
+            'ArrowLeft': { x: -1, y: 0 }, 'a': { x: -1, y: 0 }, 'A': { x: -1, y: 0 },
+            'ArrowRight': { x: 1, y: 0 }, 'd': { x: 1, y: 0 }, 'D': { x: 1, y: 0 }
+        };
+
+        // Keyboard movement hookup
+        document.addEventListener('keydown', (e) => {
+            if (movements[e.key]) {
+                e.preventDefault();
+                this.executeTurn(movements[e.key].x, movements[e.key].y);
+            }
+        });
+
+        // Click-to-move pathfinding setup
+        this.canvas.addEventListener('click', (e) => {
+            if (this.player.hp <= 0) return;
+
+            const rect = this.canvas.getBoundingClientRect();
+            // Scaling coordinates due to CSS canvas transformations
+            const canvasScaleX = this.canvas.width / rect.width;
+            const canvasScaleY = this.canvas.height / rect.height;
+
+            const mouseX = (e.clientX - rect.left) * canvasScaleX;
+            const mouseY = (e.clientY - rect.top) * canvasScaleY;
+
+            // Compute actual map tile indexes clicked using viewport offsets
+            let camX = this.player.visualX - this.viewWidth / 2;
+            let camY = this.player.visualY - this.viewHeight / 2;
+            camX = Math.max(0, Math.min(camX, this.mapWidth - this.viewWidth));
+            camY = Math.max(0, Math.min(camY, this.mapHeight - this.viewHeight));
+
+            const targetX = Math.floor(mouseX / this.tileSize + camX);
+            const targetY = Math.floor(mouseY / this.tileSize + camY);
+
+            // Pathfind if explored + valid tile
+            if (targetX >= 0 && targetX < this.mapWidth && targetY >= 0 && targetY < this.mapHeight) {
+                if (this.map[targetY][targetX] !== 0 && this.fog[targetY][targetX] !== 0) {
+                    const path = AStar.findPath(this.map, this.mapWidth, this.mapHeight, this.player, { x: targetX, y: targetY });
+                    if (path.length > 0) {
+                        this.player.path = path;
+                    }
+                }
+            }
+        });
+
+        // Inventory interaction bindings
+        document.getElementById('inventory-grid').addEventListener('click', (e) => {
+            const slot = e.target.closest('.slot');
+            if (!slot) return;
+            const index = parseInt(slot.getAttribute('data-index'));
+            this.equipItem(index);
+        });
+
+        // Equipment slot unequip bindings
+        const equipSlots = ['equip-weapon', 'equip-armor', 'equip-shield', 'equip-accessory'];
+        equipSlots.forEach((id) => {
+            document.getElementById(id).addEventListener('click', (e) => {
+                const slotType = id.replace('equip-', '');
+                this.unequipItem(slotType);
+            });
+        });
+
+        // Tooltip rendering logic
+        const showTooltip = (item, x, y) => {
+            const tooltip = document.getElementById('game-tooltip');
+            const nameEl = document.getElementById('tooltip-name');
+            const statEl = document.getElementById('tooltip-stat');
+
+            nameEl.innerText = item.name;
+            nameEl.style.color = `var(--rarity-${item.rarity})`;
+            
+            let statText = `+${item.statBonus} `;
+            if (item.type === 'weapon') statText += 'ATK';
+            else if (item.type === 'accessory') statText += 'FOV RADIUS';
+            else statText += 'DEF';
+            
+            statEl.innerText = statText;
+
+            tooltip.style.left = `${x + 10}px`;
+            tooltip.style.top = `${y + 10}px`;
+            tooltip.style.display = 'block';
+        };
+
+        const hideTooltip = () => {
+            document.getElementById('game-tooltip').style.display = 'none';
+        };
+
+        // Inventory hover bindings
+        document.addEventListener('mouseover', (e) => {
+            const slot = e.target.closest('.slot');
+            if (!slot) {
+                hideTooltip();
+                return;
+            }
+
+            let item = null;
+            if (slot.classList.contains('equipped-slot')) {
+                item = this.equipped[slot.getAttribute('data-slot-type')];
+            } else {
+                const idx = parseInt(slot.getAttribute('data-index'));
+                item = this.inventory[idx];
+            }
+
+            if (item) {
+                showTooltip(item, e.clientX, e.clientY);
+            } else {
+                hideTooltip();
+            }
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            const tooltip = document.getElementById('game-tooltip');
+            if (tooltip.style.display === 'block') {
+                tooltip.style.left = `${e.clientX + 10}px`;
+                tooltip.style.top = `${e.clientY + 10}px`;
+            }
+        });
+
+        // Restart buttons
+        document.getElementById('start-btn').addEventListener('click', () => this.startGame());
+        document.getElementById('restart-btn').addEventListener('click', () => this.startGame());
+
+        // Mute button
+        const muteBtn = document.getElementById('mute-btn');
+        muteBtn.addEventListener('click', () => {
+            sfx.muted = !sfx.muted;
+            muteBtn.innerHTML = sfx.muted ? '<span>🔇</span> Unmute SFX' : '<span>🔊</span> Mute SFX';
+        });
+    }
+
+    // --- VISUAL EFFECT SYSTEM (PARTICLES) ---
+    triggerCameraShake(intensity, duration) {
+        this.cameraShake.intensity = intensity;
+        this.cameraShake.duration = duration;
+    }
+
+    spawnBloodParticles(x, y, color) {
+        for (let i = 0; i < 8; i++) {
+            this.particles.push({
+                x: (x + 0.5) * this.tileSize,
+                y: (y + 0.5) * this.tileSize,
+                vx: (Math.random() - 0.5) * 5,
+                vy: (Math.random() - 0.5) * 5,
+                life: 1.0,
+                decay: Math.random() * 0.08 + 0.04,
+                color,
+                size: Math.random() * 3 + 2,
+                type: 'dust'
+            });
+        }
+    }
+
+    spawnGoldSparkles(x, y) {
+        for (let i = 0; i < 12; i++) {
+            this.particles.push({
+                x: (x + 0.5) * this.tileSize,
+                y: (y + 0.5) * this.tileSize,
+                vx: (Math.random() - 0.5) * 3,
+                vy: (Math.random() - 0.7) * 4,
+                life: 1.0,
+                decay: Math.random() * 0.05 + 0.03,
+                color: '#fef08a',
+                size: Math.random() * 4 + 1,
+                type: 'dust'
+            });
+        }
+    }
+
+    spawnLevelUpParticles() {
+        for (let i = 0; i < 40; i++) {
+            this.particles.push({
+                x: (this.player.x + 0.5) * this.tileSize,
+                y: (this.player.y + 0.5) * this.tileSize,
+                vx: (Math.random() - 0.5) * 6,
+                vy: -Math.random() * 5 - 2,
+                life: 1.2,
+                decay: 0.03,
+                color: '#eab308',
+                size: Math.random() * 4 + 2,
+                type: 'dust'
+            });
+        }
+    }
+
+    spawnDamageNumber(x, y, text, color) {
+        this.particles.push({
+            x: (x + 0.5) * this.tileSize,
+            y: y * this.tileSize,
+            vx: 0,
+            vy: -1.2,
+            life: 1.0,
+            decay: 0.03,
+            color,
+            text,
+            type: 'text'
+        });
+    }
+
+    updateParticles() {
+        for (let i = this.particles.length - 1; i >= 0; i--) {
+            const p = this.particles[i];
+            p.x += p.vx;
+            p.y += p.vy;
+            p.life -= p.decay;
+
+            if (p.type === 'dust') {
+                p.vy += 0.08; // Apply gravity down
+            }
+
+            if (p.life <= 0) {
+                this.particles.splice(i, 1);
+            }
+        }
+    }
+
+    // --- HIGH PERFORMANCE RENDERING + CULLING ---
+    gameLoop(timestamp) {
+        // Auto-move stepper along pathing
+        if (this.player && this.player.path.length > 0) {
+            if (!this.lastPathStepTime) this.lastPathStepTime = 0;
+            const now = Date.now();
+            if (now - this.lastPathStepTime > 130) {
+                const nextStep = this.player.path.shift();
+                
+                // Confirm next step path stays unoccupied by hostile monsters
+                const collidesEnemy = this.enemies.some(e => e.x === nextStep.x && e.y === nextStep.y);
+                if (collidesEnemy) {
+                    this.player.path = []; // Cancel pathing
+                    this.processAction(nextStep.x, nextStep.y); // Execute battle attack
+                } else {
+                    this.processAction(nextStep.x, nextStep.y);
+                }
+                this.lastPathStepTime = now;
+            }
+        }
+
+        // Entity interpolation (Lerping for screen slides)
+        if (this.player) {
+            this.player.visualX += (this.player.x - this.player.visualX) * 0.22;
+            this.player.visualY += (this.player.y - this.player.visualY) * 0.22;
+
+            this.enemies.forEach(e => {
+                e.visualX += (e.x - e.visualX) * 0.18;
+                e.visualY += (e.y - e.visualY) * 0.18;
+            });
+        }
+
+        this.updateParticles();
+        this.render();
+
+        requestAnimationFrame((ts) => this.gameLoop(ts));
+    }
+
+    render() {
+        if (!this.player) return;
+
+        this.ctx.save();
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+        // Shake camera setup
+        if (this.cameraShake.duration > 0) {
+            const shakeX = (Math.random() - 0.5) * this.cameraShake.intensity;
+            const shakeY = (Math.random() - 0.5) * this.cameraShake.intensity;
+            this.ctx.translate(shakeX, shakeY);
+            this.cameraShake.duration -= 16; // 1 frame ~16ms
+        }
+
+        // Calculate Camera limits
+        let camX = this.player.visualX - this.viewWidth / 2;
+        let camY = this.player.visualY - this.viewHeight / 2;
+        camX = Math.max(0, Math.min(camX, this.mapWidth - this.viewWidth));
+        camY = Math.max(0, Math.min(camY, this.mapHeight - this.viewHeight));
+
+        // Drawing offsets
+        const ox = -camX * this.tileSize;
+        const oy = -camY * this.tileSize;
+
+        // Render viewport limits
+        const startX = Math.max(0, Math.floor(camX));
+        const endX = Math.min(this.mapWidth, Math.ceil(camX + this.viewWidth));
+        const startY = Math.max(0, Math.floor(camY));
+        const endY = Math.min(this.mapHeight, Math.ceil(camY + this.viewHeight));
+
+        // --- CULLING LOOP TILE MAP DRAW ---
+        for (let y = startY; y < endY; y++) {
+            for (let x = startX; x < endX; x++) {
+                const visibility = this.fog[y][x];
+                if (visibility === 0) {
+                    this.ctx.fillStyle = '#0b0f19'; // Black void
+                    this.ctx.fillRect(x * this.tileSize + ox, y * this.tileSize + oy, this.tileSize, this.tileSize);
+                    continue;
+                }
+
+                const tileType = this.map[y][x];
+                const variant = this.tileVariants[y][x];
+
+                // Render Tile (Floor vs Wall)
+                if (tileType === 1) { // Floor
+                    const vIdx = variant % 4; // 4 variants
+                    this.ctx.drawImage(this.textures.floorCanvas, vIdx * this.tileSize, 0, this.tileSize, this.tileSize, x * this.tileSize + ox, y * this.tileSize + oy, this.tileSize, this.tileSize);
+                } else if (tileType === 0) { // Wall
+                    const vIdx = variant % 3; // 3 variants
+                    this.ctx.drawImage(this.textures.wallCanvas, vIdx * this.tileSize, 0, this.tileSize, this.tileSize, x * this.tileSize + ox, y * this.tileSize + oy, this.tileSize, this.tileSize);
+                } else if (tileType === 3) { // Stairs down
+                    // Draw stair design
+                    this.ctx.fillStyle = '#1e293b';
+                    this.ctx.fillRect(x * this.tileSize + ox, y * this.tileSize + oy, this.tileSize, this.tileSize);
+                    this.ctx.strokeStyle = '#38bdf8';
+                    this.ctx.strokeRect(x * this.tileSize + ox + 4, y * this.tileSize + oy + 4, this.tileSize - 8, this.tileSize - 8);
+                    
+                    this.ctx.fillStyle = '#0f172a';
+                    this.ctx.fillRect(x * this.tileSize + ox + 8, y * this.tileSize + oy + 8, this.tileSize - 16, this.tileSize - 16);
+                    this.ctx.fillStyle = '#38bdf8';
+                    this.ctx.font = '10px "Outfit"';
+                    this.ctx.fillText('DOWN', x * this.tileSize + ox + 6, y * this.tileSize + oy + 20);
+                }
+            }
+        }
+
+        // Draw Interactive elements: chests & ground items
+        this.chests.forEach(chest => {
+            if (chest.x >= startX && chest.x < endX && chest.y >= startY && chest.y < endY) {
+                if (this.fog[chest.y][chest.x] > 0) {
+                    const cx = chest.x * this.tileSize + ox;
+                    const cy = chest.y * this.tileSize + oy;
+                    
+                    this.ctx.fillStyle = chest.opened ? '#475569' : '#b45309';
+                    this.ctx.fillRect(cx + 6, cy + 8, 20, 16);
+
+                    // Lock bands
+                    this.ctx.fillStyle = '#f59e0b';
+                    this.ctx.fillRect(cx + 10, cy + 8, 2, 16);
+                    this.ctx.fillRect(cx + 20, cy + 8, 2, 16);
+                }
+            }
+        });
+
+        // Items on floor
+        this.itemsOnGround.forEach(item => {
+            if (item.x >= startX && item.x < endX && item.y >= startY && item.y < endY) {
+                if (this.fog[item.y][item.x] > 0) {
+                    const ix = item.x * this.tileSize + ox;
+                    const iy = item.y * this.tileSize + oy;
+
+                    // Rare glowing outlines
+                    this.ctx.shadowBlur = 8;
+                    this.ctx.shadowColor = `var(--rarity-${item.rarity})`;
+                    
+                    // Draw a bag / item icon representation
+                    this.ctx.font = '16px serif';
+                    this.ctx.fillText(item.icon, ix + 8, iy + 22);
+
+                    // Reset shadow
+                    this.ctx.shadowBlur = 0;
+                }
+            }
+        });
+
+        // Path indicator helper (A* glowing path line)
+        if (this.player.path.length > 0) {
+            this.ctx.strokeStyle = 'rgba(56, 189, 248, 0.4)';
+            this.ctx.lineWidth = 3;
+            this.ctx.beginPath();
+            
+            // Start path trace at player visual coordinates
+            this.ctx.moveTo(this.player.visualX * this.tileSize + this.tileSize / 2 + ox, this.player.visualY * this.tileSize + this.tileSize / 2 + oy);
+            this.player.path.forEach(step => {
+                this.ctx.lineTo(step.x * this.tileSize + this.tileSize / 2 + ox, step.y * this.tileSize + this.tileSize / 2 + oy);
+            });
+            this.ctx.stroke();
+            this.ctx.lineWidth = 1; // reset
+        }
+
+        // Draw enemies (Only inside FOV)
+        this.enemies.forEach(enemy => {
+            if (enemy.x >= startX && enemy.x < endX && enemy.y >= startY && enemy.y < endY) {
+                if (this.fog[enemy.y][enemy.x] === 2) {
+                    const ex = enemy.visualX * this.tileSize + ox;
+                    const ey = enemy.visualY * this.tileSize + oy;
+
+                    // Enemy body base circle
+                    this.ctx.fillStyle = enemy.color;
+                    this.ctx.beginPath();
+                    this.ctx.arc(ex + 16, ey + 16, 10, 0, Math.PI * 2);
+                    this.ctx.fill();
+
+                    // Symbol/face emoji inside
+                    this.ctx.font = '14px "Outfit"';
+                    this.ctx.textAlign = 'center';
+                    this.ctx.fillText(enemy.icon, ex + 16, ey + 21);
+
+                    // Enemy mini HP bar
+                    if (enemy.hp < enemy.maxHp) {
+                        const barW = 20;
+                        const hpPct = Math.max(0, enemy.hp / enemy.maxHp);
+                        this.ctx.fillStyle = 'rgba(0,0,0,0.5)';
+                        this.ctx.fillRect(ex + 6, ey - 4, barW, 3);
+                        this.ctx.fillStyle = '#fb7185';
+                        this.ctx.fillRect(ex + 6, ey - 4, barW * hpPct, 3);
+                    }
+                }
+            }
+        });
+
+        // Draw Player character
+        const px = this.player.visualX * this.tileSize + ox;
+        const py = this.player.visualY * this.tileSize + oy;
+
+        this.ctx.fillStyle = '#34d399'; // Hero emerald green
+        this.ctx.beginPath();
+        this.ctx.arc(px + 16, py + 16, 11, 0, Math.PI * 2);
+        this.ctx.fill();
+
+        // Draw glowing inner core
+        this.ctx.fillStyle = '#a7f3d0';
+        this.ctx.beginPath();
+        this.ctx.arc(px + 16, py + 16, 5, 0, Math.PI * 2);
+        this.ctx.fill();
+
+        // Draw simple helmet eyes facing target path orientation or static look
+        this.ctx.fillStyle = '#0f172a';
+        this.ctx.fillRect(px + 10, py + 13, 3, 3);
+        this.ctx.fillRect(px + 19, py + 13, 3, 3);
+
+        // --- AMBIENT LIGHTING OVERLAY STACK ---
+        this.renderLightingOverlay(ox, oy, startX, endX, startY, endY);
+
+        // Render Particle entities
+        this.particles.forEach(p => {
+            const rx = p.x + ox;
+            const ry = p.y + oy;
+
+            if (p.type === 'dust') {
+                this.ctx.fillStyle = p.color;
+                this.ctx.globalAlpha = p.life;
+                this.ctx.fillRect(rx, ry, p.size, p.size);
+            } else if (p.type === 'text') {
+                this.ctx.font = '800 12px "Press Start 2P", sans-serif';
+                this.ctx.textAlign = 'center';
+                this.ctx.fillStyle = p.color;
+                this.ctx.globalAlpha = p.life;
+                this.ctx.fillText(p.text, rx, ry);
+            }
+        });
+        this.ctx.globalAlpha = 1.0; // reset
+
+        this.ctx.restore();
+    }
+
+    renderLightingOverlay(ox, oy, startX, endX, startY, endY) {
+        // Create an offscreen buffer canvas to mask radial lights
+        const lightCanvas = document.createElement('canvas');
+        lightCanvas.width = this.canvas.width;
+        lightCanvas.height = this.canvas.height;
+        const lctx = lightCanvas.getContext('2d');
+
+        // Fill with deep dark ambient shadows (90% transparency)
+        lctx.fillStyle = 'rgba(7, 10, 18, 0.90)';
+        lctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+        lctx.globalCompositeOperation = 'destination-out';
+
+        // 1. Carve Player light FOV
+        const pVisualX = this.player.visualX * this.tileSize + this.tileSize / 2 + ox;
+        const pVisualY = this.player.visualY * this.tileSize + this.tileSize / 2 + oy;
+
+        // Add flame flicker multiplier
+        const flicker = 1.0 + Math.sin(Date.now() * 0.008) * 0.03;
+        const playerLightRadius = (this.player.fovRadius * this.tileSize) * flicker;
+
+        const radGrad = lctx.createRadialGradient(
+            pVisualX, pVisualY, 10,
+            pVisualX, pVisualY, playerLightRadius
+        );
+        radGrad.addColorStop(0, 'rgba(0, 0, 0, 1.0)');
+        radGrad.addColorStop(0.3, 'rgba(0, 0, 0, 0.8)');
+        radGrad.addColorStop(1, 'rgba(0, 0, 0, 0.0)');
+
+        lctx.fillStyle = radGrad;
+        lctx.beginPath();
+        lctx.arc(pVisualX, pVisualY, playerLightRadius, 0, Math.PI * 2);
+        lctx.fill();
+
+        // 2. Carve ambient lighting around torches
+        this.torches.forEach(torch => {
+            if (torch.x >= startX && torch.x < endX && torch.y >= startY && torch.y < endY) {
+                if (this.fog[torch.y][torch.x] === 2) {
+                    const tx = torch.x * this.tileSize + this.tileSize / 2 + ox;
+                    const ty = torch.y * this.tileSize + this.tileSize / 2 + oy;
+                    
+                    // Spark glow particles
+                    if (Math.random() < 0.1) {
+                        this.particles.push({
+                            x: torch.x * this.tileSize + 16 + (Math.random() - 0.5) * 8,
+                            y: torch.y * this.tileSize + 16,
+                            vx: (Math.random() - 0.5) * 1.5,
+                            vy: -Math.random() * 2 - 0.5,
+                            life: 1.0,
+                            decay: 0.05,
+                            color: '#fb923c',
+                            size: Math.random() * 3 + 1,
+                            type: 'dust'
+                        });
+                    }
+
+                    const tFlicker = 1.0 + Math.sin(Date.now() * 0.012 + torch.flickerPhase) * 0.05;
+                    const torchRadius = 90 * tFlicker;
+
+                    const torchGrad = lctx.createRadialGradient(
+                        tx, ty, 5,
+                        tx, ty, torchRadius
+                    );
+                    torchGrad.addColorStop(0, 'rgba(0, 0, 0, 1.0)');
+                    torchGrad.addColorStop(0.4, 'rgba(0, 0, 0, 0.7)');
+                    torchGrad.addColorStop(1, 'rgba(0, 0, 0, 0.0)');
+
+                    lctx.fillStyle = torchGrad;
+                    lctx.beginPath();
+                    lctx.arc(tx, ty, torchRadius, 0, Math.PI * 2);
+                    lctx.fill();
+                }
+            }
+        });
+
+        // 3. Draw lighting mask back onto the main canvas
+        this.ctx.drawImage(lightCanvas, 0, 0);
+
+        // Scenario 2 mask: Explored but out-of-sight tiles (visibility === 1)
+        // Re-overlay a clean, flat black layer with semi-transparency on these coordinates
+        this.ctx.fillStyle = 'rgba(7, 10, 18, 0.5)';
+        for (let y = startY; y < endY; y++) {
+            for (let x = startX; x < endX; x++) {
+                if (this.fog[y][x] === 1) {
+                    this.ctx.fillRect(x * this.tileSize + ox, y * this.tileSize + oy, this.tileSize, this.tileSize);
+                }
+            }
+        }
+    }
+}
+
+// System Startup Engine Boot Configuration
+const game = new DungeonEngine();
+</script>
+</body>
+</html>
