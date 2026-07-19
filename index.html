@@ -835,6 +835,59 @@
                 max-width: 360px;
             }
         }
+
+        /* Mobile: header text was colliding with the STATS/INV button and
+           wrapping into it on narrow viewports (e.g. iPhone Safari). */
+        @media (max-width: 640px) {
+            .game-header {
+                top: 12px;
+                left: 12px;
+                flex-direction: column;
+                align-items: flex-start;
+                justify-content: flex-start;
+                gap: 2px;
+                max-width: calc(100vw - 150px);
+                padding: 6px 10px;
+            }
+
+            .title-area h1 {
+                font-size: 9px;
+                margin-bottom: 0;
+            }
+
+            .depth-indicator {
+                font-size: 9px;
+            }
+
+            #hud-toggle-btn {
+                top: 12px !important;
+                right: 12px !important;
+                padding: 6px 8px !important;
+                font-size: 9px !important;
+            }
+
+            .controls-hint {
+                flex-wrap: wrap;
+                max-width: calc(100vw - 24px);
+                gap: 4px 10px;
+                font-size: 10px;
+                padding: 6px 10px;
+                bottom: 78px;
+            }
+
+            /* Class-select buttons overflowed off both edges of the
+               screen at phone widths since 3 * 140px min-width > viewport. */
+            .class-select-row {
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 10px !important;
+                padding: 0 16px;
+            }
+
+            .class-btn {
+                min-width: 110px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -860,7 +913,7 @@
                 <div class="screen-overlay holo" id="start-overlay">
                     <div class="screen-title" style="color: var(--primary);">ARCHON'S DESCENT</div>
                     <div class="screen-subtitle">Select Your Archetype</div>
-                    <div style="display:flex; gap:16px;">
+                    <div class="class-select-row" style="display:flex; gap:16px;">
                         <button class="glowing-btn class-btn" data-class="warrior">WARRIOR<br><span style="font-size:10px; opacity:0.8;">High HP, Shield Slam</span></button>
                         <button class="glowing-btn class-btn" data-class="mage" style="background:#a855f7;">MAGE<br><span style="font-size:10px; opacity:0.8;">High Mana, Fireball</span></button>
                         <button class="glowing-btn class-btn" data-class="rogue" style="background:#34d399; color:#0f172a;">ROGUE<br><span style="font-size:10px; opacity:0.8;">High Speed, Shadowstep</span></button>
