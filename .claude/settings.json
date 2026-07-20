@@ -1,0 +1,32 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node qa_driver_live.js edge)",
+      "Bash(node qa_mobile_start.js)",
+      "Bash(node qa_mobile_check.js)",
+      "Bash(node -e ' *)",
+      "Bash(curl -s https://jrabara101.github.io/Archon-Descent/)",
+      "Bash(node qa_driver_live.js chromium)",
+      "Bash(node -e \"console.log\\(require\\('playwright/package.json'\\).version\\)\")",
+      "Bash(node verify2.js)",
+      "Bash(node verify3.js)",
+      "Bash(node verify4.js)",
+      "Bash(lsof -ti:8791 -sTCP:LISTEN)",
+      "Bash(xargs -r kill)",
+      "Bash(node verify5.js)",
+      "Bash(lsof -ti:8792 -sTCP:LISTEN)",
+      "Bash(node verify6.js)",
+      "Bash(node verify7.js)",
+      "Bash(node verify8.js)",
+      "Bash(node verify9.js)",
+      "Bash(sed -i \"s/8793/8794/\" verify6.js verify8.js)",
+      "Bash(node verify10.js)",
+      "Bash(lsof -ti:8794 -sTCP:LISTEN)",
+      "Bash(node verify11.js)",
+      "Bash(node verify12.js)",
+      "Bash(node verify13.js)",
+      "Bash(node verify14.js)",
+      "Bash(lsof -ti:8795 -sTCP:LISTEN)"
+    ]
+  }
+}

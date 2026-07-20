@@ -415,9 +415,14 @@
             flex-direction: column;
             gap: 10px;
             flex-grow: 1;
+            min-height: 0;
             padding: 24px 20px;
             border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-            overflow: hidden;
+            overflow-y: auto;
+        }
+        .inventory-panel .inventory-grid {
+            flex-grow: 0;
+            flex-shrink: 0;
         }
 
         .panel-title {
@@ -942,6 +947,148 @@
                 display: none;
             }
         }
+
+        /* Colorblind-safe rarity palette (settings toggle) */
+        body.colorblind {
+            --rarity-rare: #38bdf8;
+            --rarity-epic: #f472b6;
+            --rarity-legendary: #fb923c;
+        }
+
+        /* Pause button (top bar) */
+        #pause-btn {
+            position: absolute;
+            top: 20px;
+            right: 165px;
+            z-index: 11;
+            padding: 8px 12px;
+            font-size: 11px;
+            font-family: 'Press Start 2P', monospace;
+            cursor: pointer;
+        }
+
+        @media (max-width: 640px) {
+            #pause-btn {
+                top: 12px;
+                right: 122px;
+                padding: 6px 8px;
+                font-size: 9px;
+            }
+        }
+
+        .small-menu-btn {
+            background: var(--bg-surface-elevated);
+            color: var(--text-main);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            font-size: 11px;
+            padding: 8px 14px;
+            box-shadow: none;
+        }
+
+        .small-menu-btn.active-mode {
+            box-shadow: 0 0 14px currentColor;
+            transform: translateY(-2px);
+        }
+
+        .small-menu-btn.locked-mode {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+        .small-menu-btn.locked-mode:hover {
+            transform: none;
+            box-shadow: none;
+        }
+
+        .settings-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            width: 100%;
+            background: rgba(0, 0, 0, 0.35);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 8px;
+            padding: 10px 14px;
+        }
+        .settings-row label { font-size: 13px; font-weight: 600; }
+        .settings-row input[type=range] { width: 140px; accent-color: var(--primary); }
+        .settings-row input[type=checkbox] { width: 18px; height: 18px; accent-color: var(--primary); }
+
+        .codex-scroll {
+            width: min(90%, 470px);
+            max-height: min(48vh, 400px);
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding-right: 6px;
+        }
+        .codex-scroll::-webkit-scrollbar { width: 4px; }
+        .codex-scroll::-webkit-scrollbar-thumb { background: var(--bg-surface-elevated); border-radius: 2px; }
+
+        .bestiary-entry {
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+            background: rgba(0, 0, 0, 0.35);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 8px;
+            padding: 10px 14px;
+            text-align: left;
+        }
+        .bestiary-entry.locked { opacity: 0.55; }
+        .be-icon { font-size: 26px; }
+        .be-name { font-weight: 800; font-size: 14px; }
+        .be-kills { color: var(--text-muted); font-family: 'Fira Code', monospace; font-size: 11px; margin-left: 6px; }
+        .be-lore { font-size: 12px; color: var(--text-muted); line-height: 1.45; margin-top: 2px; }
+        .lore-entry {
+            font-size: 12px;
+            color: #cbd5e1;
+            background: rgba(0, 0, 0, 0.35);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 8px;
+            padding: 8px 12px;
+            text-align: left;
+            line-height: 1.45;
+        }
+
+        .history-row {
+            display: grid;
+            grid-template-columns: 48px 1fr auto auto;
+            gap: 10px;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.35);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-size: 12px;
+        }
+        .hr-depth { font-family: 'Press Start 2P', monospace; font-size: 11px; color: var(--primary); }
+        .hr-cls { font-weight: 800; }
+        .hr-meta { color: var(--text-muted); font-family: 'Fira Code', monospace; font-size: 11px; }
+        .hr-date { color: var(--text-muted); font-size: 11px; }
+
+        #lore-toast {
+            position: absolute;
+            top: 80px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-8px);
+            max-width: min(480px, 84vw);
+            background: rgba(19, 26, 44, 0.95);
+            border: 1px solid rgba(234, 179, 8, 0.5);
+            border-radius: 10px;
+            padding: 12px 18px;
+            font-size: 13px;
+            line-height: 1.5;
+            color: #fde68a;
+            z-index: 60;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.35s ease, transform 0.35s ease;
+            backdrop-filter: blur(8px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+        #lore-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
     </style>
 </head>
 <body>
@@ -949,6 +1096,7 @@
     <div class="ambient-glow"></div>
 
     <button id="hud-toggle-btn" class="glowing-btn" style="position: absolute; top: 20px; right: 20px; z-index: 11; padding: 8px 12px; font-size: 11px; font-family: 'Press Start 2P', monospace; cursor: pointer;">📊 STATS/INV</button>
+    <button id="pause-btn" class="glowing-btn" title="Pause (Esc)">⏸</button>
 
     <div class="game-wrapper">
         <!-- Left Column Removed -->
@@ -960,19 +1108,34 @@
                     <h1>ARCHON'S DESCENT</h1>
                 </div>
                 <div class="depth-indicator" id="dungeon-level">DUNGEON DEPTH: B01</div>
+                <div id="run-timer" style="font-size: 11px; color: var(--text-muted); font-family: 'Fira Code', monospace;">⏱ 00:00</div>
             </div>
             
             <div class="canvas-container" id="canvas-container">
                 <!-- Overlay Start / Class Screen -->
                 <div class="screen-overlay holo" id="start-overlay">
                     <div class="screen-title" style="color: var(--primary);">ARCHON'S DESCENT</div>
-                    <div class="screen-subtitle">Select Your Archetype</div>
-                    <div class="class-select-row" style="display:flex; gap:16px;">
+                    <div class="screen-subtitle" id="start-subtitle">Select Your Archetype</div>
+                    <div class="class-select-row" style="display:flex; flex-wrap:wrap; justify-content:center; gap:16px; max-width:min(94vw, 620px);">
                         <button class="glowing-btn class-btn" data-class="warrior">WARRIOR<br><span style="font-size:10px; opacity:0.8;">High HP, Shield Slam</span></button>
                         <button class="glowing-btn class-btn" data-class="mage" style="background:#a855f7;">MAGE<br><span style="font-size:10px; opacity:0.8;">High Mana, Fireball</span></button>
                         <button class="glowing-btn class-btn" data-class="rogue" style="background:#34d399; color:#0f172a;">ROGUE<br><span style="font-size:10px; opacity:0.8;">High Speed, Shadowstep</span></button>
+                        <button class="glowing-btn class-btn" data-class="paladin" style="background:#facc15; color:#0f172a;">PALADIN<br><span style="font-size:10px; opacity:0.8;">High HP, Holy Strike</span></button>
+                        <button class="glowing-btn class-btn" data-class="necromancer" style="background:#581c87;">NECROMANCER<br><span style="font-size:10px; opacity:0.8;">Dark Magic, Raise Skeleton</span></button>
+                        <button class="glowing-btn class-btn" data-class="ranger" style="background:#14b8a6; color:#0f172a;">RANGER<br><span style="font-size:10px; opacity:0.8;">High Vision, Piercing Shot</span></button>
                     </div>
                     <button class="glowing-btn" id="open-hub-btn" style="margin-top:8px; background:#1e2942; color:var(--rarity-legendary); border:1px solid var(--rarity-legendary);">🏛️ ARCHON HUB <span id="start-souls-count" style="font-family:'Fira Code', monospace;">(0 Souls)</span></button>
+                    <button class="glowing-btn" id="daily-btn" style="margin-top:2px; background:#312e81; color:#c7d2fe; border:1px solid #6366f1;">📅 DAILY CHALLENGE<br><span id="daily-date" style="font-family:'Fira Code', monospace; font-size:10px; opacity:0.9;"></span></button>
+                    <div style="display:flex; gap:10px; margin-top:2px;">
+                        <button class="glowing-btn small-menu-btn" id="bossrush-btn" style="border:1px solid var(--accent-red); color:var(--accent-red);" title="Defeat a floor guardian to unlock">⚔️ BOSS RUSH</button>
+                        <button class="glowing-btn small-menu-btn" id="endless-btn" style="border:1px solid var(--accent-green); color:var(--accent-green);">🌊 ENDLESS MODE</button>
+                    </div>
+                    <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:10px; margin-top:2px; max-width:min(90vw, 460px);">
+                        <button class="glowing-btn small-menu-btn" id="start-bestiary-btn">📖 Bestiary</button>
+                        <button class="glowing-btn small-menu-btn" id="start-history-btn">📜 History</button>
+                        <button class="glowing-btn small-menu-btn" id="start-achievements-btn">🏆 Achievements</button>
+                        <button class="glowing-btn small-menu-btn" id="start-settings-btn">⚙️ Settings</button>
+                    </div>
                 </div>
 
                 <!-- Overlay Archon Hub (Metaprogression) -->
@@ -1014,7 +1177,71 @@
                     <div class="screen-title" style="color: var(--accent-red);">DIED IN THE DARK</div>
                     <div class="screen-subtitle" id="death-stats">You reached Depth B01</div>
                     <div class="screen-subtitle" id="death-souls" style="color: var(--rarity-legendary);">+0 Archon Souls</div>
+                    <div class="screen-subtitle" id="death-extra" style="font-family:'Fira Code', monospace; font-size:12px;"></div>
                     <button class="glowing-btn" id="restart-btn">Descend Again</button>
+                </div>
+
+                <!-- Overlay Boss Rush Victory -->
+                <div class="screen-overlay holo hidden" id="bossrush-victory-overlay">
+                    <div class="screen-title" style="color: var(--rarity-legendary);">GAUNTLET CLEARED!</div>
+                    <div class="screen-subtitle">All three floor guardians have fallen.</div>
+                    <div class="screen-subtitle" id="bossrush-victory-souls" style="color: var(--rarity-legendary);">+0 Archon Souls</div>
+                    <div class="screen-subtitle" id="bossrush-victory-extra" style="font-family:'Fira Code', monospace; font-size:12px;"></div>
+                    <button class="glowing-btn" id="bossrush-victory-btn">Return to Hub</button>
+                </div>
+
+                <!-- Overlay Pause -->
+                <div class="screen-overlay hidden" id="pause-overlay">
+                    <div class="screen-title" style="color: var(--primary);">PAUSED</div>
+                    <div class="screen-subtitle" id="pause-run-info">Depth B01</div>
+                    <div style="display:flex; flex-direction:column; gap:10px; width:min(80%, 280px);">
+                        <button class="glowing-btn" id="pause-resume-btn">▶ Resume</button>
+                        <button class="glowing-btn small-menu-btn" id="pause-settings-btn">⚙️ Settings</button>
+                        <button class="glowing-btn small-menu-btn" id="pause-bestiary-btn">📖 Bestiary</button>
+                        <button class="glowing-btn small-menu-btn" id="pause-history-btn">📜 Run History</button>
+                        <button class="glowing-btn small-menu-btn" id="pause-achievements-btn">🏆 Achievements</button>
+                        <button class="glowing-btn" id="pause-abandon-btn" style="background:#7f1d1d; color:#fecaca;">☠️ Abandon Run</button>
+                    </div>
+                </div>
+
+                <!-- Overlay Settings -->
+                <div class="screen-overlay hidden" id="settings-overlay">
+                    <div class="screen-title" style="font-size:14px;">SETTINGS</div>
+                    <div style="display:flex; flex-direction:column; gap:10px; width:min(90%, 380px);">
+                        <div class="settings-row"><label>🔊 SFX Volume</label><input type="range" id="set-sfx" min="0" max="100" value="100"></div>
+                        <div class="settings-row"><label>🎵 Music Volume</label><input type="range" id="set-music" min="0" max="100" value="40"></div>
+                        <div class="settings-row"><label>📳 Screen Shake</label><input type="range" id="set-shake" min="0" max="100" value="100"></div>
+                        <div class="settings-row"><label>👁️ Colorblind Rarity Colors</label><input type="checkbox" id="set-colorblind"></div>
+                    </div>
+                    <button class="glowing-btn" id="settings-back-btn" style="background:#475569;">Back</button>
+                </div>
+
+                <!-- Overlay Bestiary & Lore -->
+                <div class="screen-overlay hidden" id="bestiary-overlay">
+                    <div class="screen-title" style="color: var(--accent-green); font-size:14px;">BESTIARY &amp; LORE</div>
+                    <div class="screen-subtitle" id="bestiary-progress">0 / 14 recorded</div>
+                    <div class="codex-scroll">
+                        <div id="bestiary-list" style="display:flex; flex-direction:column; gap:8px;"></div>
+                        <div class="panel-title" style="margin-top:10px;">RECOVERED LORE</div>
+                        <div id="bestiary-lore-list" style="display:flex; flex-direction:column; gap:8px;"></div>
+                    </div>
+                    <button class="glowing-btn" id="bestiary-back-btn" style="background:#475569;">Back</button>
+                </div>
+
+                <!-- Overlay Run History -->
+                <div class="screen-overlay hidden" id="history-overlay">
+                    <div class="screen-title" style="color: var(--rarity-epic); font-size:14px;">RUN HISTORY</div>
+                    <div class="screen-subtitle" id="history-summary">No expeditions recorded yet.</div>
+                    <div class="codex-scroll" id="history-list"></div>
+                    <button class="glowing-btn" id="history-back-btn" style="background:#475569;">Back</button>
+                </div>
+
+                <!-- Overlay Achievements -->
+                <div class="screen-overlay hidden" id="achievements-overlay">
+                    <div class="screen-title" style="color: var(--rarity-legendary); font-size:14px;">ACHIEVEMENTS</div>
+                    <div class="screen-subtitle" id="achievements-progress">0 / 0 unlocked</div>
+                    <div class="codex-scroll" id="achievements-list"></div>
+                    <button class="glowing-btn" id="achievements-back-btn" style="background:#475569;">Back</button>
                 </div>
 
                 <canvas id="gameCanvas" width="512" height="512"></canvas>
@@ -1182,6 +1409,16 @@
                 <div class="talents-list" id="char-talents-list">
                     <div class="talent-badge" style="color:var(--text-muted); justify-content: center;">None Unlocked</div>
                 </div>
+
+                <div class="panel-title" style="margin-top: 10px;">RELICS</div>
+                <div class="talents-list" id="char-relics-list">
+                    <div class="talent-badge" style="color:var(--text-muted); justify-content: center;">None Found</div>
+                </div>
+
+                <div class="panel-title" style="margin-top: 10px;">COMPANIONS</div>
+                <div class="talents-list" id="char-allies-list">
+                    <div class="talent-badge" style="color:var(--text-muted); justify-content: center;">None</div>
+                </div>
             </div>
 
             <!-- Real-time Combat Ticker -->
@@ -1206,30 +1443,33 @@
         <div class="item-stat" id="tooltip-stat">+5 ATK</div>
     </div>
 
+    <!-- Lore scrap toast -->
+    <div id="lore-toast"></div>
+
 <script>
 
 // ============================================================================
 // --- SYNTHESIZED WEB AUDIO ENGINE ---
 // ============================================================================
 class SoundEngine {
-    constructor() { this.ctx = null; this.muted = false; }
+    constructor() { this.ctx = null; this.muted = false; this.volume = 1; }
     init() { if (!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)(); }
     playTone(freq, type, duration, volume, sweepFreq = null) {
-        if (this.muted) return;
+        if (this.muted || this.volume <= 0) return;
         this.init(); if (!this.ctx) return;
         const osc = this.ctx.createOscillator();
         const gainNode = this.ctx.createGain();
         osc.type = type;
         osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
         if (sweepFreq !== null) osc.frequency.exponentialRampToValueAtTime(sweepFreq, this.ctx.currentTime + duration);
-        gainNode.gain.setValueAtTime(volume, this.ctx.currentTime);
+        gainNode.gain.setValueAtTime(volume * this.volume, this.ctx.currentTime);
         gainNode.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + duration);
         osc.connect(gainNode);
         gainNode.connect(this.ctx.destination);
         osc.start(); osc.stop(this.ctx.currentTime + duration);
     }
     playNoise(duration, volume, sweep = false) {
-        if (this.muted) return;
+        if (this.muted || this.volume <= 0) return;
         this.init(); if (!this.ctx) return;
         const bufferSize = this.ctx.sampleRate * duration;
         const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
@@ -1242,7 +1482,7 @@ class SoundEngine {
         filter.frequency.setValueAtTime(sweep ? 1000 : 400, this.ctx.currentTime);
         if (sweep) filter.frequency.exponentialRampToValueAtTime(100, this.ctx.currentTime + duration);
         const gainNode = this.ctx.createGain();
-        gainNode.gain.setValueAtTime(volume, this.ctx.currentTime);
+        gainNode.gain.setValueAtTime(volume * this.volume, this.ctx.currentTime);
         gainNode.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + duration);
         noiseNode.connect(filter);
         filter.connect(gainNode);
@@ -1259,6 +1499,115 @@ class SoundEngine {
     playMagic() { this.playTone(600, 'sine', 0.3, 0.1, 1200); }
 }
 const sfx = new SoundEngine();
+
+// ============================================================================
+// --- ADAPTIVE PROCEDURAL MUSIC ENGINE ---
+// Synthesized ambient pad per biome plus a rhythmic combat layer that fades
+// in while enemies are engaged. No external audio files - pure Web Audio.
+// ============================================================================
+class MusicEngine {
+    constructor() {
+        this.ctx = null; this.master = null; this.padGain = null; this.pulseGain = null;
+        this.padNodes = []; this.pulseTimer = null; this.step = 0; this.lastNote = 0;
+        this.volume = 0.4; this.intensity = 0; this.target = 0;
+        this.biome = null; this.running = false; this.ducked = false;
+        this.configs = {
+            catacombs: { pad: [55, 110, 164.81], padType: 'sine', padLevel: 0.30, filter: 320, bpm: 72, notes: [110, 130.81, 164.81, 98], pulseType: 'triangle' },
+            forges:    { pad: [49, 98, 146.83], padType: 'sawtooth', padLevel: 0.10, filter: 480, bpm: 96, notes: [98, 116.54, 146.83, 87.31], pulseType: 'square' },
+            void:      { pad: [58.27, 82.41, 116.54], padType: 'triangle', padLevel: 0.26, filter: 300, bpm: 58, notes: [82.41, 116.54, 61.74, 123.47], pulseType: 'sine' }
+        };
+    }
+    init() {
+        if (this.ctx) return;
+        sfx.init();
+        this.ctx = sfx.ctx;
+        if (!this.ctx) return;
+        this.master = this.ctx.createGain(); this.master.gain.value = this.volume;
+        this.master.connect(this.ctx.destination);
+        this.padGain = this.ctx.createGain(); this.padGain.gain.value = 0.5;
+        this.padGain.connect(this.master);
+        this.pulseGain = this.ctx.createGain(); this.pulseGain.gain.value = 0;
+        this.pulseGain.connect(this.master);
+    }
+    start() {
+        this.init(); if (!this.ctx) return;
+        if (this.ctx.state === 'suspended') this.ctx.resume();
+        this.running = true;
+        if (this.biome) this.buildPad(this.biome);
+        if (!this.pulseTimer) this.pulseTimer = setInterval(() => this.tickPulse(), 90);
+    }
+    stop() {
+        this.running = false;
+        this.teardownPad();
+        if (this.pulseTimer) { clearInterval(this.pulseTimer); this.pulseTimer = null; }
+        this.intensity = 0; this.target = 0;
+        if (this.pulseGain) this.pulseGain.gain.value = 0;
+    }
+    setBiome(b) {
+        if (this.biome === b) return;
+        this.biome = b;
+        if (this.running) this.buildPad(b);
+    }
+    setVolume(v) { this.volume = v; }
+    setTarget(t) { this.target = t; }
+    duck(d) { this.ducked = d; }
+    buildPad(biome) {
+        this.teardownPad();
+        const cfg = this.configs[biome]; if (!cfg || !this.ctx) return;
+        const filter = this.ctx.createBiquadFilter();
+        filter.type = 'lowpass'; filter.frequency.value = cfg.filter;
+        filter.connect(this.padGain);
+        // Slow LFO makes the pad "breathe"
+        const lfo = this.ctx.createOscillator(); lfo.frequency.value = 0.08;
+        const lfoGain = this.ctx.createGain(); lfoGain.gain.value = 0.12;
+        lfo.connect(lfoGain); lfoGain.connect(this.padGain.gain);
+        lfo.start();
+        this.padNodes.push(lfo, lfoGain, filter);
+        cfg.pad.forEach((freq, i) => {
+            const osc = this.ctx.createOscillator();
+            osc.type = cfg.padType; osc.frequency.value = freq;
+            osc.detune.value = (i - 1) * 4; // slight detune for width
+            const g = this.ctx.createGain(); g.gain.value = cfg.padLevel;
+            osc.connect(g); g.connect(filter);
+            osc.start();
+            this.padNodes.push(osc, g);
+        });
+    }
+    teardownPad() {
+        this.padNodes.forEach(n => { try { if (n.stop) n.stop(); n.disconnect(); } catch (e) {} });
+        this.padNodes = [];
+    }
+    tickPulse() {
+        if (!this.ctx || !this.running || this.intensity < 0.05 || document.hidden) return;
+        const cfg = this.configs[this.biome]; if (!cfg) return;
+        const now = performance.now();
+        const stepMs = 30000 / cfg.bpm; // eighth notes
+        if (now - this.lastNote < stepMs) return;
+        this.lastNote = now;
+        this.step++;
+        const pattern = [0, null, 1, null, 0, 2, null, 3];
+        const noteIdx = pattern[this.step % pattern.length];
+        if (noteIdx === null) return;
+        const t = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator(); const g = this.ctx.createGain();
+        osc.type = cfg.pulseType; osc.frequency.value = cfg.notes[noteIdx];
+        g.gain.setValueAtTime(0.0001, t);
+        g.gain.exponentialRampToValueAtTime(0.22, t + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + 0.28);
+        osc.connect(g); g.connect(this.pulseGain);
+        osc.start(t); osc.stop(t + 0.3);
+    }
+    update(dt) {
+        if (!this.ctx || !this.running) return;
+        this.intensity += (this.target - this.intensity) * Math.min(1, dt / 1200);
+        if (this.pulseGain) this.pulseGain.gain.value = this.intensity * 0.8;
+        const vol = this.volume * (this.ducked ? 0.25 : 1);
+        if (this.master && Math.abs(this.master.gain.value - vol) > 0.001) {
+            this.master.gain.value += (vol - this.master.gain.value) * 0.1;
+        }
+    }
+}
+const music = new MusicEngine();
 
 // ============================================================================
 // --- A* PATHFINDING ALGORITHM ---
@@ -1374,6 +1723,106 @@ class TextureCache {
 // --- MAIN ROGUELIKE DUNGEON ENGINE ---
 // ============================================================================
 const RARITY_COLORS = { common: '#94a3b8', rare: '#3b82f6', epic: '#a855f7', legendary: '#eab308' };
+const PLAYER_COLORS = { warrior: '#ef4444', mage: '#a855f7', rogue: '#34d399', paladin: '#facc15', necromancer: '#581c87', ranger: '#14b8a6' };
+const ALL_CLASSES = ['warrior', 'mage', 'rogue', 'paladin', 'necromancer', 'ranger'];
+const RARITY_COLORS_CB = { common: '#94a3b8', rare: '#38bdf8', epic: '#f472b6', legendary: '#fb923c' };
+
+// --- Relics: passive run-altering pickups, stack across a run ---
+const RELIC_POOL = [
+    { id: 'lucky_strikes', name: 'Loaded Dice', icon: '🎯', desc: 'Every 4th strike is a guaranteed critical hit.' },
+    { id: 'soul_siphon', name: 'Soul Siphon', icon: '🌀', desc: 'Kills restore 5 MP.' },
+    { id: 'stoneheart', name: 'Stoneheart Idol', icon: '🗿', desc: 'All incoming damage reduced by 2.' },
+    { id: 'momentum', name: 'Momentum Engine', icon: '⚙️', desc: 'After a kill, your next strike deals +50% damage.' },
+    { id: 'scavenger', name: "Scavenger's Eye", icon: '🔍', desc: '+30% gold from all sources.' },
+    { id: 'glass_cannon', name: 'Glass Cannon', icon: '🏺', desc: '+30% damage dealt, +15% damage taken.' },
+    { id: 'phoenix_feather', name: 'Phoenix Feather', icon: '🪶', desc: 'Once per run, survive a killing blow at 1 HP.' },
+    { id: 'frost_walker', name: 'Frostwalker Charm', icon: '🧊', desc: 'Immune to chill and spikes; lava burns for half.' },
+    { id: 'alchemist_stone', name: "Alchemist's Stone", icon: '⚗️', desc: 'Potions restore 25 more.' },
+    { id: 'hunters_instinct', name: "Hunter's Instinct", icon: '🦉', desc: '+2 vision radius.' },
+    { id: 'vampire_sigil', name: 'Vampire Sigil', icon: '🧛', desc: 'Kills heal 5% of your max HP.' },
+    { id: 'battle_rhythm', name: 'Battle Rhythm', icon: '🥁', desc: 'Ability cooldowns reduced by 1.' }
+];
+
+// --- Bestiary: unlocked per enemy type on first kill, persisted in meta ---
+const BESTIARY_DB = {
+    goblin_scout: { name: 'Goblin Scout', icon: '👹', lore: 'Starving wretches that slipped into the Descent chasing rumors of gold. What they found instead was hunger without end — now they swarm anything that still carries warmth.' },
+    skeleton_archer: { name: 'Skeleton Archer', icon: '🏹', lore: 'The bones of the First Expedition, rearranged by the dark. They remember just enough of their training to keep their distance and loose arrows.' },
+    savage_orc: { name: 'Savage Orc', icon: '👺', lore: 'Orc clans mine the upper catacombs for relic-iron. Trespassers are considered a richer vein.' },
+    iron_guardian: { name: 'Iron Guardian', icon: '🛡️', lore: 'Animate siege armor that plants itself between you and its allies. Its warding aura blunts every blow struck near it.' },
+    fire_elemental: { name: 'Fire Elemental', icon: '🔥', lore: 'A knot of living furnace-heat. Slaying one releases everything it was holding in — stand well back.' },
+    lava_orc: { name: 'Lava Orc', icon: '👺', lore: 'Forge-clan orcs quenched in magma until their skin took the temper. Slow to anger, fast to swing.' },
+    void_summoner: { name: 'Void Summoner', icon: '👁️', lore: "It does not fight you. It simply opens doors that should stay closed, and lets what's behind them do the fighting." },
+    void_archon: { name: 'Void Archon', icon: '🐉', lore: 'Lesser echoes of the Archon itself. Their strikes warp the floor before they land — watch the red light, then move.' },
+    void_spawn: { name: 'Void Spawn', icon: '👾', lore: "Fragments shed by a Summoner's open door. Individually pitiful; collectively a tide." },
+    bound_wraith: { name: 'Bound Wraith', icon: '👻', lore: 'Souls chained to the arena guardians, hurled at intruders when their master weakens.' },
+    mimic: { name: 'Mimic', icon: '😈', lore: 'Not every chest in the Descent is furniture. The older ones have learned patience, and teeth.' },
+    bone_colossus: { name: 'Bone Colossus', icon: '💀', lore: "The fused remains of a hundred failed delvers, stacked into a warden. It guards the passage below Depth 10 with all their regret." },
+    molten_behemoth: { name: 'Molten Behemoth', icon: '🌋', lore: "The Forge's heart given legs. Its second wind melts the very ground it defends." },
+    void_archon_prime: { name: 'Void Archon Prime', icon: '🐲', lore: "The deepest warden — a crowned fragment of the power that dug the Descent in the first place. It does not intend to let you leave with what you've learned." }
+};
+
+// --- Lore scraps: found as 📜 pickups, persisted in meta ---
+const LORE_DB = [
+    'The Descent was not dug downward. Something beneath dug upward, and stopped just short of the surface.',
+    "Expedition log, day 3: The torches burn blue past Depth 4. The captain says it's the air. The captain is lying.",
+    'Merchants reach the camps by roads that do not exist on the way back. Do not ask them about the roads.',
+    'The Archon was a warden once, they say — set to guard the deep places. Nothing remains to say what it was guarding them from.',
+    'Blood shrines do not grant power. They make a trade. Read the contract in your veins carefully.',
+    'Every crate in the Descent was packed by someone who believed they were coming back for it.',
+    'Expedition log, day 11: Kell swears the walls rearrange when we sleep. We no longer sleep.',
+    'The orcs did not invade the forges. The forges called them, the way a hearth calls the cold.',
+    'Depth 9 and below is called the Void not for its darkness, but for what the darkness costs.',
+    'A rusty key opens one vault. The vaults outnumber the keys a hundredfold. Choose your door.',
+    'The wraiths in the arenas are volunteers. That is the worst part. They volunteered.',
+    'Final entry, unsigned: If you are reading this, take the souls and climb. The Descent counts its guests, and it never miscounts twice.'
+];
+
+// --- Achievements: persistent milestones tracked in meta.stats / meta.achievements ---
+const ACHIEVEMENTS_DB = [
+    { id: 'first_descent', name: 'First Descent', icon: '🪜', desc: 'Reach Depth 5.' },
+    { id: 'deep_delver', name: 'Deep Delver', icon: '⛏️', desc: 'Reach Depth 10.' },
+    { id: 'into_the_void', name: 'Into the Void', icon: '🌌', desc: 'Reach Depth 20.' },
+    { id: 'archon_slayer', name: 'Archon Slayer', icon: '💀', desc: 'Defeat a floor guardian.' },
+    { id: 'triple_threat', name: 'Triple Threat', icon: '👑', desc: 'Defeat all three floor guardians (across any runs).' },
+    { id: 'bestiary_complete', name: 'Cartographer of Horrors', icon: '📖', desc: 'Record every creature in the Bestiary.' },
+    { id: 'lore_keeper', name: 'Lore Keeper', icon: '📜', desc: 'Recover every lore scrap.' },
+    { id: 'relic_hoarder', name: 'Relic Hoarder', icon: '🎒', desc: 'Hold 5 relics at once in a single run.' },
+    { id: 'talented', name: 'Talented', icon: '🧠', desc: 'Unlock 5 talents in a single run.' },
+    { id: 'rich_archon', name: 'Rich Archon', icon: '💰', desc: 'Carry 500 gold at once.' },
+    { id: 'soul_collector', name: 'Soul Collector', icon: '👻', desc: 'Earn 100 Archon Souls in total.' },
+    { id: 'century_club', name: 'Century Club', icon: '⚔️', desc: 'Defeat 100 enemies in total.' },
+    { id: 'mimic_hunter', name: 'Mimic Hunter', icon: '😈', desc: 'Defeat a Mimic.' },
+    { id: 'vault_breaker', name: 'Vault Breaker', icon: '🗝️', desc: 'Open a sealed vault.' },
+    { id: 'high_roller', name: 'High Roller', icon: '🎰', desc: 'Hit the jackpot at a Gambling Shrine.' },
+    { id: 'phoenix_reborn', name: 'Phoenix Reborn', icon: '🪶', desc: 'Survive a killing blow with the Phoenix Feather.' },
+    { id: 'daily_devotee', name: 'Daily Devotee', icon: '📅', desc: 'Complete 3 Daily Challenges.' },
+    { id: 'speed_descent', name: 'Speed Descent', icon: '⏱️', desc: 'Reach Depth 5 in under 3 minutes.' },
+    { id: 'boss_rush_champion', name: 'Boss Rush Champion', icon: '🏅', desc: 'Clear the Boss Rush gauntlet.' },
+    { id: 'wave_survivor', name: 'Wave Survivor', icon: '🌊', desc: 'Reach Wave 10 in Endless Mode.' },
+    { id: 'not_alone', name: 'Not Alone', icon: '🐾', desc: 'Fight alongside 2 companions at once.' }
+];
+
+// --- Seeded RNG helpers (daily challenge) ---
+function mulberry32(seed) {
+    let a = seed >>> 0;
+    return function() {
+        a |= 0; a = (a + 0x6D2B79F5) | 0;
+        let t = Math.imul(a ^ (a >>> 15), 1 | a);
+        t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+}
+function hashStr(s) {
+    let h = 1779033703 ^ s.length;
+    for (let i = 0; i < s.length; i++) { h = Math.imul(h ^ s.charCodeAt(i), 3432918353); h = (h << 13) | (h >>> 19); }
+    h = Math.imul(h ^ (h >>> 16), 2246822507); h = Math.imul(h ^ (h >>> 13), 3266489909);
+    return (h ^= h >>> 16) >>> 0;
+}
+function todayKey() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
 const HUB_UPGRADES = [
     { id: 'vitality', name: 'Titan Physiology', desc: '+5 Max HP per rank', icon: '❤️', max: 10, baseCost: 20 },
     { id: 'power', name: 'Ancestral Strength', desc: '+1 Base ATK per rank', icon: '💪', max: 10, baseCost: 25 },
@@ -1428,23 +1877,67 @@ class DungeonEngine {
         this.inventory = Array(12).fill(null);
         this.equipped = { weapon: null, armor: null, shield: null, accessory: null };
         this.talents = [];
+        this.relics = [];
+        this.allies = [];
+        this.playerTraps = [];
         this.meta = this.loadMeta();
+        this.settings = this.loadSettings();
+
+        this.paused = false;
+        this.menuReturn = 'start';
+        this.runStats = null;
+        this.lastTimerSecs = -1;
+        this.darknessFloor = false;
+        this.dailyMode = false; this.dailySeed = 0; this.dailyKey = null;
+        this.phoenixUsed = false; this.luckyCounter = 0; this.momentumReady = false;
+        this.pendingMode = null;
+        this.bossRushMode = false; this.bossRushIndex = 0; this.bossRushOrder = ['catacombs', 'forges', 'void'];
+        this.endlessMode = false; this.endlessWave = 0; this.endlessBreatherTimer = 0;
 
         this.initDOM();
+        this.applySettings();
         this.bindInput();
         this.showClassScreen();
     }
 
     // --- Metaprogression (Archon Souls) ---
     loadMeta() {
+        const defaults = { souls: 0, vitality: 0, power: 0, fortune: 0, bestiary: {}, lore: [], runHistory: [], dailyBest: null, achievements: {}, stats: {} };
         try {
             const raw = localStorage.getItem('archonDescent_meta');
-            if (raw) return Object.assign({ souls: 0, vitality: 0, power: 0, fortune: 0 }, JSON.parse(raw));
+            if (raw) return Object.assign(defaults, JSON.parse(raw));
         } catch (e) {}
-        return { souls: 0, vitality: 0, power: 0, fortune: 0 };
+        return defaults;
     }
     saveMeta() {
         try { localStorage.setItem('archonDescent_meta', JSON.stringify(this.meta)); } catch (e) {}
+    }
+
+    // --- Settings (persisted separately from run/meta progression) ---
+    loadSettings() {
+        const defaults = { sfx: 1, music: 0.4, shake: 1, colorblind: false };
+        try {
+            const raw = localStorage.getItem('archonDescent_settings');
+            if (raw) return Object.assign(defaults, JSON.parse(raw));
+        } catch (e) {}
+        return defaults;
+    }
+    saveSettings() {
+        try { localStorage.setItem('archonDescent_settings', JSON.stringify(this.settings)); } catch (e) {}
+    }
+    applySettings() {
+        sfx.volume = this.settings.sfx;
+        music.setVolume(this.settings.music);
+        document.body.classList.toggle('colorblind', !!this.settings.colorblind);
+        const sync = (id, v) => { const el = document.getElementById(id); if (el) el.value = v; };
+        sync('set-sfx', Math.round(this.settings.sfx * 100));
+        sync('set-music', Math.round(this.settings.music * 100));
+        sync('set-shake', Math.round(this.settings.shake * 100));
+        const cb = document.getElementById('set-colorblind');
+        if (cb) cb.checked = !!this.settings.colorblind;
+    }
+    getRarityColor(r) {
+        return ((this.settings && this.settings.colorblind) ? RARITY_COLORS_CB : RARITY_COLORS)[r] || '#94a3b8';
     }
     updateHubUI() {
         const el = document.getElementById('start-souls-count');
@@ -1502,6 +1995,9 @@ class DungeonEngine {
         this.keysValue = document.getElementById('keys-value');
         this.detailHasteRow = document.getElementById('detail-haste-row');
         this.hasteValue = document.getElementById('haste-value');
+        this.charRelicsList = document.getElementById('char-relics-list');
+        this.charAlliesList = document.getElementById('char-allies-list');
+        this.runTimerEl = document.getElementById('run-timer');
     }
 
     resizeCanvas() {
@@ -1520,18 +2016,68 @@ class DungeonEngine {
     showClassScreen() {
         document.getElementById('start-overlay').classList.remove('hidden');
         document.getElementById('death-overlay').classList.add('hidden');
+        document.getElementById('pause-overlay').classList.add('hidden');
+        document.getElementById('bossrush-victory-overlay').classList.add('hidden');
+        this.paused = false;
+        this.pendingMode = null;
+        music.stop();
         this.updateHubUI();
+        this.updateDailyUI();
+        this.updateModeSelectUI();
     }
 
-    startGame(playerClass) {
+    updateModeSelectUI() {
+        const sub = document.getElementById('start-subtitle');
+        const br = document.getElementById('bossrush-btn');
+        const en = document.getElementById('endless-btn');
+        const unlocked = !!(this.meta.stats && this.meta.stats.bossesDefeated && this.meta.stats.bossesDefeated.length >= 1);
+        br.classList.toggle('locked-mode', !unlocked);
+        br.title = unlocked ? 'Face all three floor guardians in sequence' : 'Defeat a floor guardian to unlock';
+        br.classList.toggle('active-mode', this.pendingMode === 'bossrush');
+        en.classList.toggle('active-mode', this.pendingMode === 'endless');
+        if (this.pendingMode === 'bossrush') sub.innerText = 'Select Archetype — BOSS RUSH';
+        else if (this.pendingMode === 'endless') sub.innerText = 'Select Archetype — ENDLESS MODE';
+        else sub.innerText = 'Select Your Archetype';
+    }
+
+    updateDailyUI() {
+        const el = document.getElementById('daily-date');
+        if (!el) return;
+        const key = todayKey();
+        const seed = hashStr('archon-' + key);
+        const cls = ALL_CLASSES[seed % ALL_CLASSES.length];
+        let txt = `${key} · ${cls.toUpperCase()}`;
+        if (this.meta.dailyBest && this.meta.dailyBest.date === key) {
+            txt += ` · Best B${String(this.meta.dailyBest.depth).padStart(2, '0')}`;
+        }
+        el.innerText = txt;
+    }
+
+    startDailyChallenge() {
+        const key = todayKey();
+        this.dailyKey = key;
+        this.dailySeed = hashStr('archon-' + key);
+        const cls = ALL_CLASSES[this.dailySeed % ALL_CLASSES.length];
+        this.startGame(cls, true);
+    }
+
+    // Shared player/character setup used by every run mode (normal, daily, boss rush, endless).
+    // Callers are responsible for setting this.level and the mode flags before invoking generateLevel().
+    initNewPlayer(playerClass) {
         document.getElementById('start-overlay').classList.add('hidden');
         this.gameOverHandled = false;
 
-        this.level = 1;
         this.inventory = Array(12).fill(null);
         this.equipped = { weapon: null, armor: null, shield: null, accessory: null };
         this.talents = [];
-        
+        this.relics = [];
+        this.allies = [];
+        this.playerTraps = [];
+        this.phoenixUsed = false; this.luckyCounter = 0; this.momentumReady = false;
+        this.runStats = { activeMs: 0, kills: 0 };
+        this.lastTimerSecs = -1;
+        if (this.runTimerEl) this.runTimerEl.innerText = '⏱ 00:00';
+
         this.player = {
             x: 0, y: 0, visualX: 0, visualY: 0,
             hp: 100, maxHp: 100,
@@ -1539,7 +2085,7 @@ class DungeonEngine {
             gold: 0,
             xp: 0, xpNeeded: 100, lvl: 1,
             baseAtk: 10, baseDef: 0,
-            fovRadius: 6, path: [], classType: playerClass,
+            baseFov: 6, fovAccessory: 0, path: [], classType: playerClass,
             skillCooldown: 0, maxSkillCooldown: 5,
             skillCooldown2: 0, maxSkillCooldown2: 8,
             battleCryTurns: 0, hasteTurns: 0,
@@ -1568,27 +2114,105 @@ class DungeonEngine {
             this.player.maxSkillCooldown = 3;
             this.player.maxSkillCooldown2 = 6;
         } else if (playerClass === 'rogue') {
-            this.player.baseAtk = 12; this.player.fovRadius = 8;
+            this.player.baseAtk = 12; this.player.baseFov = 8;
             this.equipped.weapon = { id: 'w3', name: 'Twin Daggers', type: 'weapon', rarity: 'common', statBonus: 5, icon: '🔪' };
             document.getElementById('ability-1').querySelector('.icon').innerText = '💨'; // Shadowstep
             document.getElementById('ability-2').querySelector('.icon').innerText = '🗡️'; // Poison Blade
             this.player.maxSkillCooldown = 4;
             this.player.maxSkillCooldown2 = 7;
+        } else if (playerClass === 'paladin') {
+            this.player.maxHp = 115; this.player.hp = 115; this.player.baseDef = 4; this.player.baseAtk = 9;
+            this.equipped.weapon = { id: 'w4', name: 'Blessed Mace', type: 'weapon', rarity: 'common', statBonus: 5, icon: '🔨' };
+            this.equipped.shield = { id: 's2', name: 'Aegis of Dawn', type: 'shield', rarity: 'common', statBonus: 3, icon: '🔰' };
+            document.getElementById('ability-1').querySelector('.icon').innerText = '✨'; // Holy Strike
+            document.getElementById('ability-2').querySelector('.icon').innerText = '🙏'; // Lay on Hands
+            this.player.maxSkillCooldown = 4;
+            this.player.maxSkillCooldown2 = 9;
+        } else if (playerClass === 'necromancer') {
+            this.player.maxHp = 75; this.player.hp = 75; this.player.maxMp = 110; this.player.mp = 110; this.player.baseAtk = 13;
+            this.equipped.weapon = { id: 'w5', name: 'Bone Scepter', type: 'weapon', rarity: 'common', statBonus: 6, icon: '🦴' };
+            document.getElementById('ability-1').querySelector('.icon').innerText = '💀'; // Raise Skeleton
+            document.getElementById('ability-2').querySelector('.icon').innerText = '🩸'; // Drain Life
+            this.player.maxSkillCooldown = 6;
+            this.player.maxSkillCooldown2 = 4;
+        } else if (playerClass === 'ranger') {
+            this.player.baseAtk = 13; this.player.baseFov = 9;
+            this.equipped.weapon = { id: 'w6', name: 'Recurve Bow', type: 'weapon', rarity: 'common', statBonus: 6, icon: '🏹' };
+            document.getElementById('ability-1').querySelector('.icon').innerText = '🎯'; // Piercing Shot
+            document.getElementById('ability-2').querySelector('.icon').innerText = '🪤'; // Snare Trap
+            this.player.maxSkillCooldown = 4;
+            this.player.maxSkillCooldown2 = 6;
         }
 
         // Apply permanent Archon Hub upgrades
         this.player.maxHp += this.meta.vitality * 5; this.player.hp = this.player.maxHp;
         this.player.baseAtk += this.meta.power;
+    }
 
+    launchRun() {
         this.generateLevel();
         sfx.playVictory();
+        music.start();
+        music.setTarget(0);
         if (!this.loopStarted) { this.loopStarted = true; this.gameLoop(); }
     }
 
+    startGame(playerClass, daily = false) {
+        this.dailyMode = daily;
+        this.bossRushMode = false;
+        this.endlessMode = false;
+        if (!daily) { this.dailySeed = 0; this.dailyKey = null; }
+        this.level = 1;
+        this.initNewPlayer(playerClass);
+        this.launchRun();
+        if (daily) this.logMessage(`DAILY CHALLENGE ${this.dailyKey}: fixed dungeon, fixed class. Descend!`, 'log-level');
+    }
+
+    startBossRush(playerClass) {
+        this.dailyMode = false; this.dailySeed = 0; this.dailyKey = null;
+        this.bossRushMode = true;
+        this.endlessMode = false;
+        this.bossRushIndex = 0;
+        this.level = 10;
+        this.initNewPlayer(playerClass);
+        this.launchRun();
+        this.logMessage('BOSS RUSH: face all three floor guardians in sequence. No exploring, no loot runs — just steel and nerve.', 'log-level');
+    }
+
+    startEndless(playerClass) {
+        this.dailyMode = false; this.dailySeed = 0; this.dailyKey = null;
+        this.bossRushMode = false;
+        this.endlessMode = true;
+        this.endlessWave = 0;
+        this.endlessBreatherTimer = 0;
+        this.level = 5;
+        this.initNewPlayer(playerClass);
+        this.launchRun();
+        this.logMessage('ENDLESS MODE: survive as many waves as you can. There is no exit but death.', 'log-level');
+    }
+
+    // Daily Challenge determinism: swap the global RNG for a per-floor seeded
+    // generator during level generation only. Everything spawned at generation
+    // time (layout, enemies, shrines, chests) is identical for every player on
+    // the same date; randomness during play stays organic.
     generateLevel() {
+        const origRandom = Math.random;
+        if (this.dailyMode) {
+            Math.random = mulberry32((this.dailySeed ^ Math.imul(this.level, 2654435761)) >>> 0);
+        }
+        try {
+            this.generateLevelInner();
+        } finally {
+            Math.random = origRandom;
+        }
+    }
+
+    generateLevelInner() {
         this.enemies = []; this.chests = []; this.itemsOnGround = []; this.torches = [];
         this.shrines = []; this.destructibles = []; this.particles = []; this.telegraphs = [];
-        this.captives = []; this.trapStates = {};
+        this.captives = []; this.trapStates = {}; this.playerTraps = [];
+        // Rescued allies and raised skeletons are floor-scoped; a purchased pet follows across floors
+        this.allies = (this.allies || []).filter(a => a.type === 'pet');
         this.player.path = [];
         this.camX = null; this.camY = null; // snap camera instantly on the new floor
 
@@ -1597,29 +2221,57 @@ class DungeonEngine {
             this.ambientMotes.push({ x: Math.random() * this.mapWidth * this.tileSize, y: Math.random() * this.mapHeight * this.tileSize, vx: (Math.random() - 0.5) * 0.15, vy: (Math.random() - 0.5) * 0.15, phase: Math.random() * Math.PI * 2, size: Math.random() * 2 + 1 });
         }
 
-        // Set Biome
-        if (this.level >= 9) this.textures.setBiome('void');
-        else if (this.level >= 5) this.textures.setBiome('forges');
-        else this.textures.setBiome('catacombs');
-
-        // Boss Arena every 10th depth takes priority over the Merchant Camp cadence
-        const isBossFloor = (this.level % 10 === 0);
-        const isCamp = !isBossFloor && (this.level % 4 === 0);
-        this.isBossArena = false;
-
         this.map = Array(this.mapHeight).fill().map(() => Array(this.mapWidth).fill(0));
         this.fog = Array(this.mapHeight).fill().map(() => Array(this.mapWidth).fill(0));
         this.tileVariants = Array(this.mapHeight).fill().map(() => Array(this.mapWidth).fill(0).map(() => Math.floor(Math.random() * 100)));
+        this.isBossArena = false;
+        this.isEndlessArena = false;
+        this.darknessFloor = false;
 
-        if (isBossFloor) {
+        if (this.bossRushMode) {
+            const biome = this.bossRushOrder[this.bossRushIndex];
+            this.textures.setBiome(biome);
+            music.setBiome(biome);
+            this.level = 10 * (this.bossRushIndex + 1); // reuses spawnBoss()'s depth-based scaling
             this.generateBossArena();
-        } else if (isCamp) {
-            this.generateCamp();
-        } else if (this.level > 1 && Math.random() < 0.3) {
-            this.generateCaverns();
+        } else if (this.endlessMode) {
+            const biomes = ['catacombs', 'forges', 'void'];
+            const biome = biomes[Math.min(2, Math.floor(this.endlessWave / 5))];
+            this.textures.setBiome(biome);
+            music.setBiome(biome);
+            this.generateEndlessArena();
         } else {
-            this.generateDungeon();
+            // Set Biome
+            if (this.level >= 9) this.textures.setBiome('void');
+            else if (this.level >= 5) this.textures.setBiome('forges');
+            else this.textures.setBiome('catacombs');
+            music.setBiome(this.textures.currentBiome);
+
+            // Boss Arena every 10th depth takes priority over the Merchant Camp cadence
+            const isBossFloor = (this.level % 10 === 0);
+            const isCamp = !isBossFloor && (this.level % 4 === 0);
+
+            // Darkness floors: occasional oppressive floors where light barely reaches
+            this.darknessFloor = !isBossFloor && !isCamp && this.level >= 3 && Math.random() < 0.15;
+
+            if (isBossFloor) {
+                this.generateBossArena();
+            } else if (isCamp) {
+                this.generateCamp();
+            } else if (this.level > 1 && Math.random() < 0.3) {
+                this.generateCaverns();
+            } else {
+                this.generateDungeon();
+            }
+
+            // Lore scraps tucked into some hostile floors
+            if (!isBossFloor && !isCamp && Math.random() < 0.30) this.spawnLoreScrap();
         }
+
+        // A persisted pet needs to be relocated next to the player on the new floor
+        this.allies.forEach(a => {
+            if (a.type === 'pet') { a.x = this.player.x; a.y = this.player.y; a.visualX = a.x; a.visualY = a.y; }
+        });
 
         this.updateFOV();
         this.updateStatsUI();
@@ -1628,9 +2280,42 @@ class DungeonEngine {
         this.updateCodexUI();
 
         let biomeName = this.textures.currentBiome.toUpperCase();
-        this.dungeonLevel.innerText = `DEPTH B${this.level.toString().padStart(2, '0')} - ${biomeName}`;
-        this.logMessage(`Descended to B${this.level}.`, 'log-system');
-        if (this.isBossArena) this.logMessage(`A powerful guardian blocks the way forward!`, 'log-combat-enemy');
+        if (this.darknessFloor) biomeName += ' · DARK';
+
+        if (this.bossRushMode) {
+            this.dungeonLevel.innerText = `BOSS RUSH ${this.bossRushIndex + 1}/3 - ${biomeName}`;
+            this.logMessage(`Guardian ${this.bossRushIndex + 1} of 3 awaits...`, 'log-combat-enemy');
+        } else if (this.endlessMode) {
+            this.dungeonLevel.innerText = `ENDLESS · WAVE ${this.endlessWave} - ${biomeName}`;
+        } else {
+            this.dungeonLevel.innerText = `DEPTH B${this.level.toString().padStart(2, '0')} - ${biomeName}`;
+            this.logMessage(`Descended to B${this.level}.`, 'log-system');
+            if (this.darknessFloor) this.logMessage('An oppressive darkness smothers this floor. Your light barely reaches.', 'log-system');
+            if (this.isBossArena) this.logMessage(`A powerful guardian blocks the way forward!`, 'log-combat-enemy');
+
+            if (this.level === 5 && this.runStats) {
+                const t = this.runStats.activeMs;
+                if (!this.meta.stats) this.meta.stats = {};
+                if (this.meta.stats.speedDepth5Ms === undefined || t < this.meta.stats.speedDepth5Ms) {
+                    this.meta.stats.speedDepth5Ms = t;
+                    this.saveMeta();
+                }
+            }
+        }
+        this.checkAchievements();
+    }
+
+    spawnLoreScrap() {
+        for (let tries = 0; tries < 60; tries++) {
+            const x = 1 + Math.floor(Math.random() * (this.mapWidth - 2));
+            const y = 1 + Math.floor(Math.random() * (this.mapHeight - 2));
+            if (this.map[y][x] !== 1) continue;
+            if (Math.hypot(x - this.player.x, y - this.player.y) < 8) continue;
+            if (this.itemsOnGround.some(i => i.x === x && i.y === y)) continue;
+            const idx = Math.floor(Math.random() * LORE_DB.length);
+            this.itemsOnGround.push({ isLore: true, loreIdx: idx, name: 'Lore Scrap', icon: '📜', x, y, popZ: 0, popVz: 0 });
+            return;
+        }
     }
 
     updateCodexUI() {
@@ -1969,15 +2654,105 @@ class DungeonEngine {
 
     spawnBoss(x, y) {
         const b = this.textures.currentBiome;
-        let name = 'Bone Colossus', hp = 220, atk = 18, def = 6, xp = 400, icon = '💀', color = '#e2e8f0';
-        if (b === 'forges') { name = 'Molten Behemoth'; hp = 280; atk = 22; def = 8; xp = 500; icon = '🌋'; color = '#f97316'; }
-        else if (b === 'void') { name = 'Void Archon Prime'; hp = 360; atk = 28; def = 10; xp = 700; icon = '🐲'; color = '#a855f7'; }
+        let name = 'Bone Colossus', hp = 220, atk = 18, def = 6, xp = 400, icon = '💀', color = '#e2e8f0', codexKey = 'bone_colossus';
+        if (b === 'forges') { name = 'Molten Behemoth'; hp = 280; atk = 22; def = 8; xp = 500; icon = '🌋'; color = '#f97316'; codexKey = 'molten_behemoth'; }
+        else if (b === 'void') { name = 'Void Archon Prime'; hp = 360; atk = 28; def = 10; xp = 700; icon = '🐲'; color = '#a855f7'; codexKey = 'void_archon_prime'; }
 
         // Extra scaling for bosses met deep beyond their biome's usual band
         const depthBonus = Math.floor(this.level / 10);
         hp += depthBonus * 60; atk += depthBonus * 6; xp += depthBonus * 100;
 
-        this.enemies.push({ x, y, visualX: x, visualY: y, name, hp, maxHp: hp, atk, def, xpReward: xp, icon, color, ai: 'telegraph', statuses: [], aware: true, elite: false, affixes: [], isBoss: true, phase: 1, hitFlash: 0, knockX: 0, knockY: 0, ghostHp: hp, ghostDelay: 0, dying: false, deathTimer: 0 });
+        this.enemies.push({ x, y, visualX: x, visualY: y, name, hp, maxHp: hp, atk, def, xpReward: xp, icon, color, codexKey, ai: 'telegraph', statuses: [], aware: true, elite: false, affixes: [], isBoss: true, phase: 1, hitFlash: 0, knockX: 0, knockY: 0, ghostHp: hp, ghostDelay: 0, dying: false, deathTimer: 0 });
+    }
+
+    // --- Endless Mode: reuses the boss arena's circular layout for a wave-survival gauntlet ---
+    generateEndlessArena() {
+        this.isEndlessArena = true;
+        const cx = Math.floor(this.mapWidth / 2);
+        const cy = Math.floor(this.mapHeight / 2);
+        const radius = 16;
+
+        for (let y = 0; y < this.mapHeight; y++) {
+            for (let x = 0; x < this.mapWidth; x++) {
+                if (Math.hypot(x - cx, y - cy) <= radius) this.map[y][x] = 1;
+            }
+        }
+
+        const pillarCount = 10;
+        for (let i = 0; i < pillarCount; i++) {
+            const angle = (i / pillarCount) * Math.PI * 2;
+            const pr = radius * 0.55;
+            const px = Math.round(cx + Math.cos(angle) * pr);
+            const py = Math.round(cy + Math.sin(angle) * pr);
+            if (px >= 0 && px < this.mapWidth && py >= 0 && py < this.mapHeight && this.map[py][px] === 1) {
+                this.placeDestructible(px, py, 'crate');
+            }
+        }
+
+        this.player.x = cx; this.player.y = cy;
+        this.player.visualX = cx; this.player.visualY = cy;
+
+        // No stairs in Endless - the only way out is death or abandoning the run
+        this.stairs = { x: -1, y: -1 };
+
+        const torchCount = 8;
+        for (let i = 0; i < torchCount; i++) {
+            const angle = (i / torchCount) * Math.PI * 2;
+            const tx = Math.round(cx + Math.cos(angle) * (radius + 1));
+            const ty = Math.round(cy + Math.sin(angle) * (radius + 1));
+            this.spawnTorchAt(tx, ty);
+        }
+
+        this.endlessWave = 0;
+        this.spawnNextEndlessWave();
+    }
+
+    spawnNextEndlessWave() {
+        this.endlessWave++;
+        const cx = Math.floor(this.mapWidth / 2);
+        const cy = Math.floor(this.mapHeight / 2);
+        const radius = 16;
+        const waveEnemyCount = Math.min(14, 3 + Math.floor(this.endlessWave * 1.4));
+
+        // Borrow spawnEnemy()'s existing depth-based scaling by temporarily raising this.level
+        const savedLevel = this.level;
+        this.level = 3 + this.endlessWave * 2;
+        for (let i = 0; i < waveEnemyCount; i++) {
+            for (let tries = 0; tries < 20; tries++) {
+                const angle = Math.random() * Math.PI * 2;
+                const r = 4 + Math.random() * (radius - 6);
+                const ex = Math.round(cx + Math.cos(angle) * r);
+                const ey = Math.round(cy + Math.sin(angle) * r);
+                if (this.map[ey] && this.map[ey][ex] === 1 && !this.enemies.some(e => e.x === ex && e.y === ey)) {
+                    this.spawnEnemy(ex, ey);
+                    const spawned = this.enemies[this.enemies.length - 1];
+                    if (spawned) spawned.aware = true; // engage immediately in the arena
+                    break;
+                }
+            }
+        }
+        this.level = savedLevel;
+
+        this.logMessage(`Wave ${this.endlessWave} begins! (${waveEnemyCount} enemies)`, 'log-combat-enemy');
+        this.triggerCameraShake(6, 200);
+        this.dungeonLevel.innerText = `ENDLESS · WAVE ${this.endlessWave} - ${this.textures.currentBiome.toUpperCase()}`;
+        this.drawMinimap();
+
+        if (!this.meta.stats) this.meta.stats = {};
+        if (!this.meta.stats.bestWave || this.endlessWave > this.meta.stats.bestWave) {
+            this.meta.stats.bestWave = this.endlessWave;
+            this.saveMeta();
+        }
+        this.checkAchievements();
+    }
+
+    startEndlessBreather() {
+        this.endlessBreatherTimer = 1800;
+        this.logMessage('Wave cleared! A brief respite before the next wave...', 'log-level');
+        sfx.playLevelUp();
+        this.player.hp = Math.min(this.player.maxHp, this.player.hp + Math.ceil(this.player.maxHp * 0.15));
+        this.player.mp = Math.min(this.player.maxMp, this.player.mp + Math.ceil(this.player.maxMp * 0.15));
+        this.updateStatsUI();
     }
 
     spawnTorchAt(x, y) {
@@ -1990,24 +2765,26 @@ class DungeonEngine {
         const b = this.textures.currentBiome;
         let name = 'Goblin Scout'; let hp = 20; let atk = 6; let def = 0; let xp = 20; let icon = '👹'; let color = '#fb7185';
         let ai = 'melee'; // melee, ranged, summoner, exploder
-        
+        let codexKey = 'goblin_scout';
+
         let roll = Math.random();
-        
+
         if (b === 'catacombs') {
-            if (roll > 0.8) { name = 'Skeleton Archer'; icon = '🏹'; color = '#d1d5db'; hp=15; atk=8; ai='ranged'; }
-            else if (roll > 0.6) { name = 'Savage Orc'; icon = '👺'; color = '#a7f3d0'; hp=35; atk=10; def=2; xp=45; }
+            if (roll > 0.8) { name = 'Skeleton Archer'; icon = '🏹'; color = '#d1d5db'; hp=15; atk=8; ai='ranged'; codexKey='skeleton_archer'; }
+            else if (roll > 0.6) { name = 'Savage Orc'; icon = '👺'; color = '#a7f3d0'; hp=35; atk=10; def=2; xp=45; codexKey='savage_orc'; }
         } else if (b === 'forges') {
-            if (roll > 0.7) { name = 'Fire Elemental'; icon = '🔥'; color = '#f97316'; hp=40; atk=12; ai='exploder'; }
-            else { name = 'Lava Orc'; icon = '👺'; color = '#dc2626'; hp=50; atk=15; def=4; xp=60; }
+            if (roll > 0.7) { name = 'Fire Elemental'; icon = '🔥'; color = '#f97316'; hp=40; atk=12; ai='exploder'; codexKey='fire_elemental'; }
+            else { name = 'Lava Orc'; icon = '👺'; color = '#dc2626'; hp=50; atk=15; def=4; xp=60; codexKey='lava_orc'; }
         } else if (b === 'void') {
-            if (roll > 0.6) { name = 'Void Summoner'; icon = '👁️'; color = '#9333ea'; hp=60; atk=10; ai='summoner'; xp=100;}
-            else { name = 'Void Archon'; icon = '🐉'; color = '#c084fc'; hp=80; atk=20; def=6; xp=150; ai='telegraph'; }
+            if (roll > 0.6) { name = 'Void Summoner'; icon = '👁️'; color = '#9333ea'; hp=60; atk=10; ai='summoner'; xp=100; codexKey='void_summoner'; }
+            else { name = 'Void Archon'; icon = '🐉'; color = '#c084fc'; hp=80; atk=20; def=6; xp=150; ai='telegraph'; codexKey='void_archon'; }
         }
 
         // Occasionally reinforce a plain melee spawn into a Tank that shields nearby allies from damage
         if (ai === 'melee' && Math.random() < 0.12) {
             name = 'Iron Guardian'; icon = '🛡️'; color = '#94a3b8';
             hp = Math.floor(hp * 2.2); atk = Math.floor(atk * 0.8); def += 6; ai = 'tank';
+            codexKey = 'iron_guardian';
         }
 
         // Scale with level
@@ -2026,12 +2803,14 @@ class DungeonEngine {
             name = `${affixNames[affixes[0]]} ${name}`;
         }
 
-        this.enemies.push({ x, y, visualX: x, visualY: y, name, hp, maxHp: hp, atk, def, xpReward: xp, icon, color, ai, statuses: [], aware: false, elite, affixes, hitFlash: 0, knockX: 0, knockY: 0, ghostHp: hp, ghostDelay: 0, dying: false, deathTimer: 0 });
+        this.enemies.push({ x, y, visualX: x, visualY: y, name, hp, maxHp: hp, atk, def, xpReward: xp, icon, color, codexKey, ai, statuses: [], aware: false, elite, affixes, hitFlash: 0, knockX: 0, knockY: 0, ghostHp: hp, ghostDelay: 0, dying: false, deathTimer: 0 });
     }
 
     spawnChest(x, y) {
         if (x === this.stairs.x && y === this.stairs.y) return;
-        this.chests.push({ x, y, opened: false });
+        // Some chests are lies with teeth
+        const mimic = this.level >= 2 && Math.random() < 0.12;
+        this.chests.push({ x, y, opened: false, mimic });
     }
 
     // --- Environmental hazard helpers ---
@@ -2051,14 +2830,16 @@ class DungeonEngine {
     }
     randomShrineType() {
         const r = Math.random();
-        if (r < 0.32) return 'blood';
-        if (r < 0.64) return 'purify';
-        if (r < 0.84) return 'haste';
-        return 'anvil';
+        if (r < 0.24) return 'blood';
+        if (r < 0.48) return 'purify';
+        if (r < 0.62) return 'haste';
+        if (r < 0.78) return 'anvil';
+        if (r < 0.90) return 'gamble';
+        return 'well';
     }
     spawnShrine(x, y) {
         const type = this.randomShrineType();
-        const icons = { blood: '🩸', purify: '💠', haste: '⚡', anvil: '⚒️' };
+        const icons = { blood: '🩸', purify: '💠', haste: '⚡', anvil: '⚒️', gamble: '🎲', well: '⛲' };
         this.shrines.push({ x, y, type, icon: icons[type] });
     }
 
@@ -2094,7 +2875,7 @@ class DungeonEngine {
             this.map[doorY][doorX] = 6; // Locked Door
             this.spawnChest(vaultX, vaultY);
             const chest = this.chests[this.chests.length - 1];
-            if (chest) chest.guaranteed = 'rare_plus';
+            if (chest) { chest.guaranteed = 'rare_plus'; chest.mimic = false; }
 
             const keyRoom = rooms[Math.floor(Math.random() * hostIdx)] || rooms[0];
             const kx = keyRoom.x + 1 + Math.floor(Math.random() * (keyRoom.w - 2));
@@ -2115,7 +2896,7 @@ class DungeonEngine {
         }
         const px = this.player.x; const py = this.player.y;
         this.fog[py][px] = 2;
-        const radius = this.player.fovRadius;
+        const radius = this.getFovRadius();
         const rays = 144;
         for (let i = 0; i < rays; i++) {
             const dx = Math.cos((i / rays) * Math.PI * 2);
@@ -2138,7 +2919,7 @@ class DungeonEngine {
     }
     
     useSkill() {
-        if (this.player.skillCooldown > 0 || this.transition) return;
+        if (this.player.skillCooldown > 0 || this.transition || this.paused || this.isMenuOverlayOpen()) return;
 
         if (this.player.classType === 'warrior') {
             // Shield Slam: AOE stun adjacent enemies
@@ -2209,11 +2990,90 @@ class DungeonEngine {
                 this.logMessage(`Shadowstep!`, 'log-combat-player');
                 this.postTurnSystems();
             }
+        } else if (this.player.classType === 'paladin') {
+            // Holy Strike: smite an adjacent enemy and heal a portion of the damage dealt
+            let hit = false;
+            const neighbors = [ {x:0, y:1}, {x:0, y:-1}, {x:1, y:0}, {x:-1, y:0} ];
+            neighbors.forEach(n => {
+                if (hit) return;
+                const tx = this.player.x + n.x; const ty = this.player.y + n.y;
+                const enemy = this.enemies.find(e => e.x === tx && e.y === ty && !e.dying);
+                if (enemy) {
+                    const dmg = this.applyDamageToEnemy(enemy, this.getPlayerAttack() + 6);
+                    enemy.hp -= dmg;
+                    const heal = Math.floor(dmg * 0.3);
+                    this.player.hp = Math.min(this.player.maxHp, this.player.hp + heal);
+                    this.triggerHitFlash(enemy); this.triggerKnockback(enemy, this.player.x, this.player.y); this.resetGhostDelay(enemy);
+                    this.spawnAttackSwipe(this.player.x, this.player.y, tx, ty);
+                    this.spawnDamageNumber(tx, ty, `-${dmg}`, '#facc15');
+                    this.spawnDamageNumber(this.player.x, this.player.y, `+${heal}`, '#34d399');
+                    this.logMessage(`Holy Strike smites ${enemy.name}!`, 'log-combat-player');
+                    hit = true;
+                }
+            });
+            if (hit) {
+                sfx.playHit(); this.triggerCameraShake(6, 150);
+                this.player.skillCooldown = this.player.maxSkillCooldown;
+                this.checkEnemyDeaths();
+                this.postTurnSystems();
+            }
+        } else if (this.player.classType === 'necromancer') {
+            // Raise Skeleton: summon a temporary skeletal ally (only one active at a time)
+            if (this.player.mp >= 25) {
+                let spot = null;
+                for (let tries = 0; tries < 12; tries++) {
+                    const dx = Math.floor(Math.random() * 3) - 1, dy = Math.floor(Math.random() * 3) - 1;
+                    const sx = this.player.x + dx, sy = this.player.y + dy;
+                    if (this.map[sy] && this.map[sy][sx] === 1 && !this.enemies.some(e => e.x === sx && e.y === sy)) { spot = { x: sx, y: sy }; break; }
+                }
+                if (spot) {
+                    this.player.mp -= 25;
+                    this.player.skillCooldown = this.player.maxSkillCooldown;
+                    this.allies = this.allies.filter(a => a.type !== 'summon');
+                    this.allies.push({ x: spot.x, y: spot.y, visualX: spot.x, visualY: spot.y, icon: '💀', color: '#a78bfa', name: 'Raised Skeleton', type: 'summon', turnsLeft: 60, atk: 6 + this.player.lvl, hitFlash: 0, knockX: 0, knockY: 0 });
+                    sfx.playMagic();
+                    this.spawnLevelUpParticles();
+                    this.logMessage('You raise a skeleton to fight at your side!', 'log-combat-player');
+                    this.checkAchievements();
+                    this.postTurnSystems();
+                }
+            }
+        } else if (this.player.classType === 'ranger') {
+            // Piercing Shot: fire toward the nearest visible enemy, hitting everything in that line
+            let target = null, minDist = 999;
+            const range = this.getFovRadius();
+            this.enemies.forEach(e => {
+                if (e.dying) return;
+                const dist = Math.hypot(e.x - this.player.x, e.y - this.player.y);
+                if (dist < range && this.fog[e.y][e.x] === 2 && dist < minDist) { target = e; minDist = dist; }
+            });
+            if (target) {
+                this.player.skillCooldown = this.player.maxSkillCooldown;
+                sfx.playHit();
+                const dx = Math.sign(target.x - this.player.x), dy = Math.sign(target.y - this.player.y);
+                let tx = this.player.x, ty = this.player.y, hitAny = false;
+                for (let step = 0; step < range; step++) {
+                    tx += dx; ty += dy;
+                    if (tx < 0 || tx >= this.mapWidth || ty < 0 || ty >= this.mapHeight || this.map[ty][tx] === 0) break;
+                    const hitEnemy = this.enemies.find(e => !e.dying && e.x === tx && e.y === ty);
+                    if (hitEnemy) {
+                        const dmg = this.applyDamageToEnemy(hitEnemy, this.getPlayerAttack() + 6);
+                        hitEnemy.hp -= dmg;
+                        this.triggerHitFlash(hitEnemy); this.resetGhostDelay(hitEnemy);
+                        this.spawnDamageNumber(hitEnemy.x, hitEnemy.y, `-${dmg}`, '#14b8a6');
+                        hitAny = true;
+                    }
+                }
+                this.spawnAttackSwipe(this.player.x, this.player.y, target.x, target.y);
+                if (hitAny) { this.triggerCameraShake(5, 120); this.logMessage('Piercing Shot rips through your foes!', 'log-combat-player'); }
+                this.checkEnemyDeaths();
+                this.postTurnSystems();
+            }
         }
     }
 
     useSkill2() {
-        if (this.player.skillCooldown2 > 0 || this.transition) return;
+        if (this.player.skillCooldown2 > 0 || this.transition || this.paused || this.isMenuOverlayOpen()) return;
 
         if (this.player.classType === 'warrior') {
             // Battle Cry: temporary ATK/DEF buff
@@ -2270,11 +3130,65 @@ class DungeonEngine {
                 this.checkEnemyDeaths();
                 this.postTurnSystems();
             }
+        } else if (this.player.classType === 'paladin') {
+            // Lay on Hands: strong self-heal and cleanse all negative statuses
+            if (this.player.mp >= 20) {
+                this.player.mp -= 20;
+                this.player.hp = Math.min(this.player.maxHp, this.player.hp + 35);
+                this.player.statuses = [];
+                this.player.skillCooldown2 = this.player.maxSkillCooldown2;
+                sfx.playLevelUp();
+                this.spawnLevelUpParticles();
+                this.spawnDamageNumber(this.player.x, this.player.y, '+35', '#34d399');
+                this.logMessage('Lay on Hands! Wounds close, curses lift.', 'log-level');
+                this.postTurnSystems();
+            }
+        } else if (this.player.classType === 'necromancer') {
+            // Drain Life: damage the nearest visible enemy and heal a portion of the damage dealt
+            if (this.player.mp >= 20) {
+                let target = null, minDist = 999;
+                this.enemies.forEach(e => {
+                    if (e.dying) return;
+                    const dist = Math.hypot(e.x - this.player.x, e.y - this.player.y);
+                    if (dist < 7 && this.fog[e.y][e.x] === 2 && dist < minDist) { target = e; minDist = dist; }
+                });
+                if (target) {
+                    this.player.mp -= 20;
+                    this.player.skillCooldown2 = this.player.maxSkillCooldown2;
+                    sfx.playMagic();
+                    this.spawnCastWindup(this.player);
+                    this.particles.push({ x: this.player.visualX * this.tileSize, y: this.player.visualY * this.tileSize, tx: target.x * this.tileSize, ty: target.y * this.tileSize, life: 1, decay: 0.1, type: 'projectile', color: '#7c3aed', trailTimer: 0, cb: () => {
+                        const dmg = this.applyDamageToEnemy(target, this.getPlayerAttack() + 10);
+                        target.hp -= dmg;
+                        const heal = Math.floor(dmg * 0.4);
+                        this.player.hp = Math.min(this.player.maxHp, this.player.hp + heal);
+                        this.triggerHitFlash(target); this.triggerKnockback(target, this.player.x, this.player.y); this.resetGhostDelay(target);
+                        this.spawnBloodParticles(target.x, target.y, '#7c3aed');
+                        this.spawnDamageNumber(target.x, target.y, `-${dmg}`, '#7c3aed');
+                        this.spawnDamageNumber(this.player.x, this.player.y, `+${heal}`, '#34d399');
+                        this.logMessage(`Drain Life siphons ${target.name}!`, 'log-combat-magic');
+                        if (target.hp <= 0) { this.hitStopTimer = 70; this.triggerCameraShake(10, 150); }
+                        this.checkEnemyDeaths();
+                    }});
+                    this.postTurnSystems();
+                }
+            }
+        } else if (this.player.classType === 'ranger') {
+            // Snare Trap: lay a hidden trap that damages and stuns the next enemy to step on it
+            if (this.map[this.player.y][this.player.x] === 1) {
+                this.playerTraps.push({ x: this.player.x, y: this.player.y, dmg: this.getPlayerAttack() + 8 });
+                this.player.skillCooldown2 = this.player.maxSkillCooldown2;
+                sfx.playHit();
+                this.spawnShards(this.player.x, this.player.y, '#78350f');
+                this.logMessage('You lay a snare trap.', 'log-combat-player');
+                this.postTurnSystems();
+            }
         }
     }
 
     usePotion(type) {
-        if (!this.player || this.player.hp <= 0 || this.transition) return;
+        if (!this.player || this.player.hp <= 0 || this.transition || this.paused || this.isMenuOverlayOpen()) return;
+        const heal = 50 + (this.relics.includes('alchemist_stone') ? 25 : 0);
         if (type === 'hp') {
             if (this.player.potions.hp > 0) {
                 if (this.player.hp >= this.player.maxHp) {
@@ -2282,10 +3196,10 @@ class DungeonEngine {
                     return;
                 }
                 this.player.potions.hp--;
-                this.player.hp = Math.min(this.player.maxHp, this.player.hp + 50);
+                this.player.hp = Math.min(this.player.maxHp, this.player.hp + heal);
                 sfx.playLoot();
-                this.spawnDamageNumber(this.player.x, this.player.y, '+50', '#34d399');
-                this.logMessage(`Drank a Health Potion. Restored 50 HP.`, 'log-combat-player');
+                this.spawnDamageNumber(this.player.x, this.player.y, `+${heal}`, '#34d399');
+                this.logMessage(`Drank a Health Potion. Restored ${heal} HP.`, 'log-combat-player');
                 this.updateStatsUI();
             } else {
                 this.logMessage(`No Health Potions remaining!`, 'log-combat-enemy');
@@ -2297,10 +3211,10 @@ class DungeonEngine {
                     return;
                 }
                 this.player.potions.mp--;
-                this.player.mp = Math.min(this.player.maxMp, this.player.mp + 50);
+                this.player.mp = Math.min(this.player.maxMp, this.player.mp + heal);
                 sfx.playMagic();
-                this.spawnDamageNumber(this.player.x, this.player.y, '+50 MP', '#3b82f6');
-                this.logMessage(`Drank a Mana Potion. Restored 50 MP.`, 'log-combat-player');
+                this.spawnDamageNumber(this.player.x, this.player.y, `+${heal} MP`, '#3b82f6');
+                this.logMessage(`Drank a Mana Potion. Restored ${heal} MP.`, 'log-combat-player');
                 this.updateStatsUI();
             } else {
                 this.logMessage(`No Mana Potions remaining!`, 'log-combat-enemy');
@@ -2382,6 +3296,63 @@ class DungeonEngine {
                 sfx.playMagic();
                 this.logMessage('Haste! You move with unnatural speed for 50 turns... but you feel exposed.', 'log-level');
                 this.shrines.splice(shrineIndex, 1);
+            } else if (shrine.type === 'gamble') {
+                const cost = 30 + this.level * 5;
+                if (this.player.gold < cost) {
+                    this.logMessage(`The Gambling Shrine demands ${cost} gold for a roll.`, 'log-system');
+                } else {
+                    this.player.gold -= cost;
+                    const roll = Math.random();
+                    if (roll < 0.40) {
+                        this.logMessage('The dice betray you. The shrine consumes your offering.', 'log-combat-enemy');
+                    } else if (roll < 0.70) {
+                        const win = cost * 2;
+                        this.dropGoldAt(targetX, targetY, win);
+                        this.spawnGoldSparkles(targetX, targetY);
+                        this.logMessage(`The shrine spits out ${win} gold!`, 'log-loot');
+                    } else if (roll < 0.90) {
+                        this.dropLootAt(targetX, targetY);
+                        this.logMessage('The shrine dispenses a mystery prize!', 'log-loot');
+                    } else {
+                        const it = this.generateProceduralItem('rare_plus');
+                        it.x = targetX; it.y = targetY; it.popZ = 0; it.popVz = 4;
+                        this.itemsOnGround.push(it);
+                        this.dropRelicAt(targetX, targetY);
+                        this.spawnGoldSparkles(targetX, targetY);
+                        this.logMessage('JACKPOT! Treasure pours forth!', 'log-loot');
+                        this.bumpStat('gambleJackpots', 1);
+                    }
+                    sfx.playLoot();
+                    this.shrines.splice(shrineIndex, 1);
+                    this.updateStatsUI();
+                }
+            } else if (shrine.type === 'well') {
+                const cost = 25;
+                if (this.player.gold < cost) {
+                    this.logMessage('Toss in 25 gold to make a wish at the well.', 'log-system');
+                } else {
+                    this.player.gold -= cost;
+                    const roll = Math.random();
+                    if (roll < 0.10) {
+                        this.dropRelicAt(targetX, targetY);
+                        this.logMessage('The well glows — your wish is granted!', 'log-loot');
+                    } else if (roll < 0.30) {
+                        const p = Math.random() < 0.5 ? 'hp' : 'mp';
+                        this.player.potions[p]++;
+                        this.logMessage(`A ${p === 'hp' ? 'Health' : 'Mana'} Potion floats to the surface.`, 'log-loot');
+                    } else if (roll < 0.45) {
+                        this.dropGoldAt(targetX, targetY, cost * 3);
+                        this.logMessage('Coins bubble back up — threefold!', 'log-loot');
+                    } else {
+                        const xp = 8 + this.level * 2;
+                        this.player.xp += xp;
+                        this.logMessage(`The well hums softly. (+${xp} XP)`, 'log-system');
+                        this.checkLevelUp();
+                    }
+                    sfx.playLoot();
+                    this.shrines.splice(shrineIndex, 1);
+                    this.updateStatsUI();
+                }
             }
             return false; // don't step on it
         }
@@ -2402,6 +3373,7 @@ class DungeonEngine {
             sfx.playLevelUp();
             this.spawnGoldSparkles(targetX, targetY);
             this.logMessage('Rescued a captive! They reward you with gold and a relic.', 'log-loot');
+            this.recruitRescuedAlly(targetX, targetY);
             this.postTurnSystems();
             return true;
         }
@@ -2417,10 +3389,14 @@ class DungeonEngine {
                 return false;
             }
             sfx.playVictory();
-            this.startLevelTransition(() => {
-                this.level++;
-                this.generateLevel();
-            });
+            if (this.bossRushMode) {
+                this.startLevelTransition(() => this.advanceBossRush());
+            } else {
+                this.startLevelTransition(() => {
+                    this.level++;
+                    this.generateLevel();
+                });
+            }
             return true;
         }
 
@@ -2439,22 +3415,31 @@ class DungeonEngine {
         if (steppedTile === 5) {
             const trap = this.trapStates[`${targetX},${targetY}`];
             if (!trap || trap.active) {
-                this.player.hp -= 5;
-                this.triggerHitFlash(this.player); this.resetGhostDelay(this.player);
-                this.logMessage('Stepped on spikes!', 'log-combat-enemy');
-                sfx.playHurt();
-                this.spawnDamageNumber(targetX, targetY, '-5', '#fb7185');
+                if (this.relics.includes('frost_walker')) {
+                    this.logMessage('Your charm turns the spikes aside.', 'log-system');
+                } else {
+                    const dmg = this.damagePlayer(5);
+                    this.triggerHitFlash(this.player); this.resetGhostDelay(this.player);
+                    this.logMessage('Stepped on spikes!', 'log-combat-enemy');
+                    sfx.playHurt();
+                    this.spawnDamageNumber(targetX, targetY, `-${dmg}`, '#fb7185');
+                }
             }
         } else if (steppedTile === 7) {
-            const dmg = 8 + Math.floor(this.level * 0.5);
-            this.player.hp -= dmg;
+            let base = 8 + Math.floor(this.level * 0.5);
+            if (this.relics.includes('frost_walker')) base = Math.ceil(base / 2);
+            const dmg = this.damagePlayer(base);
             this.triggerHitFlash(this.player); this.resetGhostDelay(this.player);
             this.logMessage('The lava scorches you!', 'log-combat-enemy');
             sfx.playHurt();
             this.spawnDamageNumber(targetX, targetY, `-${dmg}`, '#f97316');
         } else if (steppedTile === 8) {
-            if (!this.hasStatus(this.player, 'chill')) this.logMessage('Sticky webs cling to you, chilling your movement!', 'log-system');
-            this.applyStatus(this.player, 'chill', 3);
+            if (this.relics.includes('frost_walker')) {
+                this.logMessage('The webs cannot grip your frost-touched boots.', 'log-system');
+            } else {
+                if (!this.hasStatus(this.player, 'chill')) this.logMessage('Sticky webs cling to you, chilling your movement!', 'log-system');
+                this.applyStatus(this.player, 'chill', 3);
+            }
         }
 
         this.postTurnSystems();
@@ -2485,8 +3470,7 @@ class DungeonEngine {
                 // Trigger explosion (thin telegraphs, like boss charges, only hit their exact tile)
                 const hitPlayer = t.thin ? (this.player.x === t.x && this.player.y === t.y) : (Math.abs(this.player.x - t.x) <= 1 && Math.abs(this.player.y - t.y) <= 1);
                 if (hitPlayer) {
-                    const dmg = Math.ceil(t.dmg * this.getIncomingDamageMultiplier());
-                    this.player.hp -= dmg;
+                    const dmg = this.damagePlayer(t.dmg);
                     this.triggerHitFlash(this.player); this.resetGhostDelay(this.player);
                     this.logMessage(`Struck by a telegraphed attack for ${dmg}!`, 'log-combat-enemy');
                     sfx.playHurt();
@@ -2506,14 +3490,46 @@ class DungeonEngine {
         }
 
         if (!skipEnemyTurn) this.processEnemyAI();
+        this.updateAllies();
         this.updateFOV();
         this.updateStatsUI();
         this.drawMinimap();
+
+        // Drive the adaptive music layer: combat intensity rises while engaged
+        const musicCombat = this.enemies.some(e => !e.dying && e.aware && Math.hypot(e.x - this.player.x, e.y - this.player.y) <= 10);
+        music.setTarget(musicCombat ? 1 : 0);
 
         if (this.player.hp <= 0) this.handleGameOver();
     }
 
     getIncomingDamageMultiplier() { return this.player.hasteTurns > 0 ? 1.5 : 1; }
+
+    getFovRadius() {
+        let r = this.player.baseFov + (this.player.fovAccessory || 0);
+        if (this.relics.includes('hunters_instinct')) r += 2;
+        if (this.darknessFloor) r -= 2;
+        return Math.max(3, r);
+    }
+
+    // Central player-damage funnel: applies haste exposure, relic modifiers,
+    // and the Phoenix Feather death-save. Returns the final damage dealt.
+    damagePlayer(rawDmg) {
+        let dmg = rawDmg * this.getIncomingDamageMultiplier();
+        if (this.relics.includes('glass_cannon')) dmg *= 1.15;
+        if (this.relics.includes('stoneheart')) dmg -= 2;
+        dmg = Math.max(1, Math.ceil(dmg));
+        this.player.hp -= dmg;
+        if (this.player.hp <= 0 && this.relics.includes('phoenix_feather') && !this.phoenixUsed) {
+            this.phoenixUsed = true;
+            this.player.hp = 1;
+            this.spawnLevelUpParticles();
+            this.spawnDamageNumber(this.player.x, this.player.y, 'REBORN!', '#fb923c');
+            this.logMessage('The Phoenix Feather ignites — you refuse to die!', 'log-level');
+            this.bumpStat('phoenixSaves', 1);
+        }
+        if (this.player.hp < 0) this.player.hp = 0;
+        return dmg;
+    }
 
     applyDamageToEnemy(enemy, rawDmg) {
         let dmg = rawDmg;
@@ -2526,6 +3542,7 @@ class DungeonEngine {
     }
 
     applyStatus(entity, type, turns, opts = {}) {
+        if (entity === this.player && type === 'chill' && this.relics && this.relics.includes('frost_walker')) return;
         if (!entity.statuses) entity.statuses = [];
         const existing = entity.statuses.find(s => s.type === type);
         if (existing) { existing.turns = Math.max(existing.turns, turns); Object.assign(existing, opts); }
@@ -2568,11 +3585,23 @@ class DungeonEngine {
         const enemy = this.enemies[enemyIdx];
         const isSneak = !isBonus && enemy.aware === false; // unaware target: guaranteed critical strike
         let rawDmg = Math.max(1, this.getPlayerAttack() - enemy.def);
+        if (this.momentumReady) {
+            rawDmg = Math.ceil(rawDmg * 1.5);
+            this.momentumReady = false;
+            this.spawnDamageNumber(enemy.x, enemy.y, 'MOMENTUM!', '#38bdf8');
+        }
         let isCrit = false;
         if (isSneak) {
             rawDmg *= 3;
-        } else if (Math.random() < Math.min(0.6, (5 + this.player.lvl) / 100)) {
-            isCrit = true; rawDmg = Math.ceil(rawDmg * 2);
+        } else {
+            let forced = false;
+            if (this.relics.includes('lucky_strikes')) {
+                this.luckyCounter = (this.luckyCounter || 0) + 1;
+                if (this.luckyCounter >= 4) { this.luckyCounter = 0; forced = true; }
+            }
+            if (forced || Math.random() < Math.min(0.6, (5 + this.player.lvl) / 100)) {
+                isCrit = true; rawDmg = Math.ceil(rawDmg * 2);
+            }
         }
         let dmg = this.applyDamageToEnemy(enemy, rawDmg);
 
@@ -2630,26 +3659,49 @@ class DungeonEngine {
                 enemy.deathTimer = 1.0;
                 this.logMessage(`Vanquished ${enemy.name}! (+${enemy.xpReward} XP)`, 'log-level');
                 this.player.xp += enemy.xpReward;
+                this.recordKill(enemy);
+
+                // On-kill relic effects
+                if (this.relics.includes('soul_siphon')) {
+                    this.player.mp = Math.min(this.player.maxMp, this.player.mp + 5);
+                }
+                if (this.relics.includes('vampire_sigil')) {
+                    const heal = Math.ceil(this.player.maxHp * 0.05);
+                    this.player.hp = Math.min(this.player.maxHp, this.player.hp + heal);
+                    this.spawnDamageNumber(this.player.x, this.player.y, `+${heal}`, '#34d399');
+                }
+                if (this.relics.includes('momentum')) this.momentumReady = true;
 
                 // Exploder trigger
                 if (enemy.ai === 'exploder') {
                     this.logMessage(`${enemy.name} explodes!`, 'log-combat-enemy');
                     if (Math.abs(this.player.x - enemy.x) <= 1 && Math.abs(this.player.y - enemy.y) <= 1) {
-                        this.player.hp -= 15; this.spawnDamageNumber(this.player.x, this.player.y, '-15', '#fb7185');
+                        const bdmg = this.damagePlayer(15);
+                        this.spawnDamageNumber(this.player.x, this.player.y, `-${bdmg}`, '#fb7185');
                         this.triggerHitFlash(this.player); this.resetGhostDelay(this.player); this.triggerCameraShake(10, 200);
                     }
                 }
 
                 if (enemy.isBoss) {
-                    // Guaranteed legendary drop plus a generous gold cache
+                    // Guaranteed legendary drop, a relic, plus a generous gold cache
                     const item = this.generateProceduralItem('legendary');
                     item.x = enemy.x; item.y = enemy.y; item.popZ = 0; item.popVz = 5;
                     this.itemsOnGround.push(item);
                     this.logMessage(`The guardian drops: ${item.name} (LEGENDARY)!`, 'log-loot');
                     this.dropGoldAt(enemy.x, enemy.y, 100 + this.level * 10);
+                    this.dropRelicAt(enemy.x, enemy.y);
+                    this.recordBossKill(enemy.codexKey);
+                } else if (enemy.codexKey === 'mimic') {
+                    // Mimics guard the treasure they pretended to be
+                    this.dropLootAt(enemy.x, enemy.y);
+                    this.dropGoldAt(enemy.x, enemy.y, 40 + this.level * 6);
                 } else {
                     if (Math.random() < 0.4 || enemy.elite) this.dropLootAt(enemy.x, enemy.y);
                     if (Math.random() < 0.6) this.dropGoldAt(enemy.x, enemy.y, Math.floor(Math.random()*10 + this.level*3));
+                    if (enemy.elite && Math.random() < 0.15) {
+                        this.dropRelicAt(enemy.x, enemy.y);
+                        this.logMessage('The champion was hoarding a relic!', 'log-loot');
+                    }
                 }
                 this.spawnDeathBurst(enemy);
                 sfx.playHit();
@@ -2659,6 +3711,111 @@ class DungeonEngine {
         }
     }
 
+    recordKill(enemy) {
+        if (this.runStats) this.runStats.kills++;
+        this.bumpStat('totalKills', 1);
+        if (enemy.codexKey === 'mimic') this.bumpStat('mimicKills', 1);
+        if (!enemy.codexKey) return;
+        if (!this.meta.bestiary) this.meta.bestiary = {};
+        const first = !this.meta.bestiary[enemy.codexKey];
+        this.meta.bestiary[enemy.codexKey] = (this.meta.bestiary[enemy.codexKey] || 0) + 1;
+        if (first) {
+            const entry = BESTIARY_DB[enemy.codexKey];
+            this.logMessage(`📖 Bestiary updated: ${entry ? entry.name : enemy.name}`, 'log-level');
+        }
+        this.saveMeta();
+        this.checkAchievements();
+    }
+
+    dropRelicAt(x, y) {
+        const owned = this.relics.concat(this.itemsOnGround.filter(i => i.isRelic).map(i => i.relicId));
+        const available = RELIC_POOL.filter(r => !owned.includes(r.id));
+        if (available.length === 0) { this.dropGoldAt(x, y, 60 + this.level * 10); return; }
+        const r = available[Math.floor(Math.random() * available.length)];
+        this.itemsOnGround.push({ isRelic: true, relicId: r.id, name: r.name, icon: r.icon, x, y, popZ: 0, popVz: 4.5 });
+    }
+
+    grantRelic(id) {
+        const r = RELIC_POOL.find(rr => rr.id === id);
+        if (!r || this.relics.includes(id)) return;
+        this.relics.push(id);
+        if (id === 'battle_rhythm') {
+            this.player.maxSkillCooldown = Math.max(1, this.player.maxSkillCooldown - 1);
+            this.player.maxSkillCooldown2 = Math.max(1, this.player.maxSkillCooldown2 - 1);
+        }
+        sfx.playLevelUp();
+        this.spawnLevelUpParticles();
+        this.logMessage(`RELIC: ${r.name} — ${r.desc}`, 'log-loot');
+        this.showLoreToast(`${r.icon} ${r.name} — ${r.desc}`);
+        this.updateStatsUI();
+        this.updateFOV();
+        this.drawMinimap();
+        this.checkAchievements();
+    }
+
+    showLoreToast(text) {
+        const el = document.getElementById('lore-toast');
+        if (!el) return;
+        el.innerText = text;
+        el.classList.add('show');
+        clearTimeout(this.loreToastTimer);
+        this.loreToastTimer = setTimeout(() => el.classList.remove('show'), 4200);
+    }
+
+    // --- Achievements: lifetime milestones persisted in meta ---
+    bumpStat(key, delta = 1) {
+        if (!this.meta.stats) this.meta.stats = {};
+        this.meta.stats[key] = (this.meta.stats[key] || 0) + delta;
+        this.saveMeta();
+        this.checkAchievements();
+    }
+    recordBossKill(codexKey) {
+        if (!this.meta.stats) this.meta.stats = {};
+        if (!this.meta.stats.bossesDefeated) this.meta.stats.bossesDefeated = [];
+        if (codexKey && !this.meta.stats.bossesDefeated.includes(codexKey)) this.meta.stats.bossesDefeated.push(codexKey);
+        this.saveMeta();
+        this.checkAchievements();
+    }
+    unlockAchievement(id) {
+        if (!this.meta.achievements) this.meta.achievements = {};
+        if (this.meta.achievements[id]) return;
+        const a = ACHIEVEMENTS_DB.find(x => x.id === id);
+        if (!a) return;
+        this.meta.achievements[id] = Date.now();
+        this.saveMeta();
+        sfx.playLevelUp();
+        this.logMessage(`🏆 Achievement unlocked: ${a.name}`, 'log-level');
+        this.showLoreToast(`🏆 ${a.name} — ${a.desc}`);
+    }
+    checkAchievements() {
+        const s = this.meta.stats || {};
+        // Boss Rush and Endless Mode repurpose this.level as a difficulty knob, not real
+        // dungeon depth, so depth milestones only apply to normal/daily descents.
+        if (!this.bossRushMode && !this.endlessMode) {
+            if (this.level >= 5) this.unlockAchievement('first_descent');
+            if (this.level >= 10) this.unlockAchievement('deep_delver');
+            if (this.level >= 20) this.unlockAchievement('into_the_void');
+        }
+        if ((s.bossesDefeated || []).length >= 1) this.unlockAchievement('archon_slayer');
+        if ((s.bossesDefeated || []).length >= 3) this.unlockAchievement('triple_threat');
+        if (Object.keys(this.meta.bestiary || {}).length >= Object.keys(BESTIARY_DB).length) this.unlockAchievement('bestiary_complete');
+        if ((this.meta.lore || []).length >= LORE_DB.length) this.unlockAchievement('lore_keeper');
+        if (this.relics && this.relics.length >= 5) this.unlockAchievement('relic_hoarder');
+        if (this.talents && this.talents.length >= 5) this.unlockAchievement('talented');
+        if (this.player && this.player.gold >= 500) this.unlockAchievement('rich_archon');
+        if ((s.totalSoulsEarned || 0) >= 100) this.unlockAchievement('soul_collector');
+        if ((s.totalKills || 0) >= 100) this.unlockAchievement('century_club');
+        if ((s.mimicKills || 0) >= 1) this.unlockAchievement('mimic_hunter');
+        if ((s.vaultChestsOpened || 0) >= 1) this.unlockAchievement('vault_breaker');
+        if ((s.gambleJackpots || 0) >= 1) this.unlockAchievement('high_roller');
+        if ((s.phoenixSaves || 0) >= 1) this.unlockAchievement('phoenix_reborn');
+        if ((s.dailyCompletions || 0) >= 3) this.unlockAchievement('daily_devotee');
+        if (s.speedDepth5Ms !== undefined && s.speedDepth5Ms < 180000) this.unlockAchievement('speed_descent');
+        if (s.bossRushCleared) this.unlockAchievement('boss_rush_champion');
+        if ((s.bestWave || 0) >= 10) this.unlockAchievement('wave_survivor');
+        if (this.allies && this.allies.length >= 2) this.unlockAchievement('not_alone');
+    }
+
     explodeBarrel(x, y) {
         this.logMessage('A barrel explodes!', 'log-combat-enemy');
         sfx.playHurt();
@@ -2666,8 +3823,7 @@ class DungeonEngine {
         this.spawnDeathBurst({ x, y, color: '#f97316' });
 
         if (Math.abs(this.player.x - x) <= 1 && Math.abs(this.player.y - y) <= 1) {
-            const dmg = Math.ceil((18 + this.level * 1.5) * this.getIncomingDamageMultiplier());
-            this.player.hp -= dmg;
+            const dmg = this.damagePlayer(18 + this.level * 1.5);
             this.triggerHitFlash(this.player); this.resetGhostDelay(this.player);
             this.spawnDamageNumber(this.player.x, this.player.y, `-${dmg}`, '#fb7185');
             this.logMessage(`Caught in the blast for ${dmg}!`, 'log-combat-enemy');
@@ -2744,7 +3900,7 @@ class DungeonEngine {
                 const sx = enemy.x + (Math.random() < 0.5 ? 2 : -2);
                 const sy = enemy.y + (Math.random() < 0.5 ? 2 : -2);
                 if (sx >= 0 && sx < this.mapWidth && sy >= 0 && sy < this.mapHeight && this.map[sy][sx] === 1 && !this.enemies.some(e => e.x === sx && e.y === sy)) {
-                    this.enemies.push({ x: sx, y: sy, visualX: sx, visualY: sy, name: 'Bound Wraith', hp: 30 + this.level * 4, maxHp: 30 + this.level * 4, atk: 8 + this.level, def: 1, xpReward: 25, icon: '👻', color: '#a855f7', ai: 'melee', statuses: [], aware: true, elite: false, affixes: [], hitFlash: 0, knockX: 0, knockY: 0, ghostHp: 30, ghostDelay: 0, dying: false, deathTimer: 0 });
+                    this.enemies.push({ x: sx, y: sy, visualX: sx, visualY: sy, name: 'Bound Wraith', hp: 30 + this.level * 4, maxHp: 30 + this.level * 4, atk: 8 + this.level, def: 1, xpReward: 25, icon: '👻', color: '#a855f7', codexKey: 'bound_wraith', ai: 'melee', statuses: [], aware: true, elite: false, affixes: [], hitFlash: 0, knockX: 0, knockY: 0, ghostHp: 30, ghostDelay: 0, dying: false, deathTimer: 0 });
                 }
             }
             return;
@@ -2790,8 +3946,7 @@ class DungeonEngine {
             if (dist === Math.floor(dist) || dist < 4) { // Roughly line of sight
                 // Shoot player
                 this.particles.push({ x: enemy.visualX * this.tileSize, y: enemy.visualY * this.tileSize, tx: this.player.visualX * this.tileSize, ty: this.player.visualY * this.tileSize, life: 1, decay: 0.1, type: 'projectile', color: '#d1d5db', trailTimer: 0, cb: () => {
-                    let dmg = Math.max(1, Math.ceil((enemy.atk - this.getPlayerDefense()) * this.getIncomingDamageMultiplier()));
-                    this.player.hp -= dmg;
+                    const dmg = this.damagePlayer(Math.max(1, enemy.atk - this.getPlayerDefense()));
                     this.triggerHitFlash(this.player); this.triggerKnockback(this.player, enemy.x, enemy.y); this.resetGhostDelay(this.player);
                     this.spawnBloodParticles(this.player.x, this.player.y, '#fb7185');
                     this.spawnSparks(this.player.x, this.player.y);
@@ -2813,20 +3968,19 @@ class DungeonEngine {
             let sx = enemy.x + (Math.random() < 0.5 ? 1 : -1);
             let sy = enemy.y + (Math.random() < 0.5 ? 1 : -1);
             if (this.map[sy] && this.map[sy][sx] === 1 && !this.enemies.some(e=>e.x===sx && e.y===sy)) {
-                this.enemies.push({ x: sx, y: sy, visualX: sx, visualY: sy, name: 'Void Spawn', hp: 10, maxHp: 10, atk: 5, def: 0, xpReward: 5, icon: '👾', color: '#a855f7', ai: 'melee', statuses: [], aware: true, elite: false, affixes: [], hitFlash: 0, knockX: 0, knockY: 0, ghostHp: 10, ghostDelay: 0, dying: false, deathTimer: 0 });
+                this.enemies.push({ x: sx, y: sy, visualX: sx, visualY: sy, name: 'Void Spawn', hp: 10, maxHp: 10, atk: 5, def: 0, xpReward: 5, icon: '👾', color: '#a855f7', codexKey: 'void_spawn', ai: 'melee', statuses: [], aware: true, elite: false, affixes: [], hitFlash: 0, knockX: 0, knockY: 0, ghostHp: 10, ghostDelay: 0, dying: false, deathTimer: 0 });
                 this.logMessage(`${enemy.name} summons a minion!`, 'log-system');
                 return;
             }
         }
 
         if (dist <= 1.5) {
-            let dmg = Math.max(1, Math.ceil((enemy.atk - this.getPlayerDefense()) * this.getIncomingDamageMultiplier()));
+            const dmg = this.damagePlayer(Math.max(1, enemy.atk - this.getPlayerDefense()));
             if (this.talents.includes('thorns')) {
                 let ret = this.applyDamageToEnemy(enemy, Math.floor(dmg * 0.25));
                 enemy.hp -= ret; this.spawnDamageNumber(enemy.x, enemy.y, `-${ret}`, '#facc15');
                 this.triggerHitFlash(enemy); this.resetGhostDelay(enemy);
             }
-            this.player.hp = Math.max(0, this.player.hp - dmg);
             this.triggerHitFlash(this.player); this.triggerKnockback(this.player, enemy.x, enemy.y); this.resetGhostDelay(this.player);
             this.spawnAttackSwipe(enemy.x, enemy.y, this.player.x, this.player.y);
             sfx.playHurt(); this.triggerCameraShake(8, 200);
@@ -2846,9 +4000,77 @@ class DungeonEngine {
                 if (this.player.x !== next.x || this.player.y !== next.y) {
                     this.spawnFootstepDust(enemy.x, enemy.y);
                     enemy.x = next.x; enemy.y = next.y;
+                    this.checkPlayerTrapTrigger(enemy);
                 }
             }
         }
+    }
+
+    checkPlayerTrapTrigger(enemy) {
+        const idx = this.playerTraps.findIndex(t => t.x === enemy.x && t.y === enemy.y);
+        if (idx === -1) return;
+        const trap = this.playerTraps[idx];
+        this.playerTraps.splice(idx, 1);
+        const dmg = this.applyDamageToEnemy(enemy, trap.dmg);
+        enemy.hp -= dmg;
+        this.applyStatus(enemy, 'stun', 2);
+        this.triggerHitFlash(enemy); this.resetGhostDelay(enemy);
+        this.spawnDamageNumber(enemy.x, enemy.y, `-${dmg}`, '#ca8a04');
+        this.spawnShards(enemy.x, enemy.y, '#78350f');
+        this.logMessage(`${enemy.name} triggers your snare trap!`, 'log-combat-player');
+        sfx.playHit();
+        this.checkEnemyDeaths();
+    }
+
+    // --- Companions: a persistent purchasable pet plus temporary allies from rescues/summons ---
+    recruitPet() {
+        if (this.allies.some(a => a.type === 'pet')) return;
+        const x = this.player.x, y = this.player.y;
+        this.allies.push({ x, y, visualX: x, visualY: y, icon: '🐺', color: '#38bdf8', name: 'Spirit Wolf', type: 'pet', atk: 4 + Math.floor(this.player.lvl * 0.5), hitFlash: 0, knockX: 0, knockY: 0 });
+        sfx.playLevelUp();
+        this.logMessage('A Spirit Wolf now fights at your side!', 'log-loot');
+        this.updateStatsUI();
+        this.checkAchievements();
+    }
+
+    recruitRescuedAlly(x, y) {
+        const names = ['Bram the Freed', 'Sera the Unchained', 'Old Kettle', 'Wisp'];
+        const name = names[Math.floor(Math.random() * names.length)];
+        this.allies.push({ x, y, visualX: x, visualY: y, icon: '🧑‍🤝‍🧑', color: '#facc15', name, type: 'rescued', turnsLeft: 40, atk: 6 + this.level, hitFlash: 0, knockX: 0, knockY: 0 });
+        this.logMessage(`${name} joins you for the rest of this floor!`, 'log-loot');
+        this.updateStatsUI();
+        this.checkAchievements();
+    }
+
+    updateAllies() {
+        if (this.allies.length === 0) return;
+        for (let i = this.allies.length - 1; i >= 0; i--) {
+            const a = this.allies[i];
+            if (a.turnsLeft !== undefined) {
+                a.turnsLeft--;
+                if (a.turnsLeft <= 0) {
+                    this.logMessage(`${a.name} fades away.`, 'log-system');
+                    this.allies.splice(i, 1);
+                    this.updateStatsUI();
+                    continue;
+                }
+            }
+            const target = this.enemies.find(e => !e.dying && Math.abs(e.x - a.x) + Math.abs(e.y - a.y) <= 1);
+            if (target) {
+                const dmg = this.applyDamageToEnemy(target, a.atk);
+                target.hp -= dmg;
+                this.triggerHitFlash(target); this.resetGhostDelay(target);
+                this.spawnDamageNumber(target.x, target.y, `-${dmg}`, a.color);
+                continue;
+            }
+            const dist = Math.hypot(this.player.x - a.x, this.player.y - a.y);
+            if (dist > 1.5) {
+                const blockers = this.enemies.filter(e => !e.dying).concat(this.allies.filter(x => x !== a));
+                const path = AStar.findPath(this.map, this.mapWidth, this.mapHeight, a, this.player, blockers);
+                if (path.length > 0) { a.x = path[0].x; a.y = path[0].y; }
+            }
+        }
+        this.checkEnemyDeaths();
     }
 
     checkLevelUp() {
@@ -2907,6 +4129,7 @@ class DungeonEngine {
         else if(talent.id === 'strength') { this.player.baseAtk+=5; }
         this.logMessage(`Acquired Talent: ${talent.name}`, 'log-level');
         this.updateStatsUI();
+        this.checkAchievements();
     }
 
     openShop() {
@@ -2915,6 +4138,9 @@ class DungeonEngine {
             { id: 'pot_mp', name: 'Mana Potion', price: 20, icon: '🧪', effect: () => { this.player.potions.mp++; } },
             { id: 'gear', name: 'Mystery Relic', price: 100, icon: '💎', effect: () => { this.addItemToInventory(this.generateProceduralItem()); } }
         ];
+        if (!this.allies.some(a => a.type === 'pet')) {
+            items.push({ id: 'pet', name: 'Spirit Wolf Companion', price: 150, icon: '🐺', effect: () => { this.recruitPet(); } });
+        }
         const container = document.getElementById('shop-items');
         container.innerHTML = '';
         items.forEach(it => {
@@ -2928,6 +4154,7 @@ class DungeonEngine {
                     sfx.playLoot();
                     this.updateStatsUI();
                     this.logMessage(`Bought ${it.name}.`, 'log-system');
+                    if (it.id === 'pet') this.openShop(); // refresh so the now-owned pet drops off the list
                 } else {
                     this.logMessage(`Not enough gold!`, 'log-combat-enemy');
                 }
@@ -3007,15 +4234,33 @@ class DungeonEngine {
 
     openChest(chestIdx) {
         const chest = this.chests[chestIdx];
+        if (chest.mimic) {
+            // The chest was never a chest
+            this.chests.splice(chestIdx, 1);
+            const hp = 30 + this.level * 6;
+            this.enemies.push({ x: chest.x, y: chest.y, visualX: chest.x, visualY: chest.y, name: 'Mimic', hp, maxHp: hp, atk: 8 + this.level * 2, def: this.level, xpReward: 60 + this.level * 8, icon: '😈', color: '#f59e0b', codexKey: 'mimic', ai: 'melee', statuses: [], aware: true, elite: false, affixes: [], hitFlash: 0, knockX: 0, knockY: 0, ghostHp: hp, ghostDelay: 0, dying: false, deathTimer: 0 });
+            sfx.playHurt();
+            this.triggerCameraShake(10, 220);
+            this.spawnShards(chest.x, chest.y, '#b45309');
+            this.logMessage('The chest bares its teeth — a MIMIC!', 'log-combat-enemy');
+            return;
+        }
         chest.opened = true;
         sfx.playLoot();
         this.triggerCameraShake(6, 150);
         this.spawnGoldSparkles(chest.x, chest.y);
+        if (chest.guaranteed === 'rare_plus') this.bumpStat('vaultChestsOpened', 1);
         const item = this.generateProceduralItem(chest.guaranteed || null);
         this.logMessage(`Discovered: ${item.name} (${item.rarity.toUpperCase()})!`, 'log-loot');
         const added = this.addItemToInventory(item);
         if (!added) { item.x = chest.x; item.y = chest.y; item.popZ = 0; item.popVz = 4.5; this.itemsOnGround.push(item); }
-        
+
+        // Rarely, a relic is hidden underneath the loot
+        if (!chest.guaranteed && Math.random() < 0.07) {
+            this.dropRelicAt(chest.x, chest.y);
+            this.logMessage('A strange relic was hidden inside!', 'log-loot');
+        }
+
         // 50% chance to also find a potion in chests
         if (Math.random() < 0.5) {
             const pType = Math.random() < 0.5 ? 'hp' : 'mp';
@@ -3031,7 +4276,8 @@ class DungeonEngine {
     }
 
     dropGoldAt(x, y, amount) {
-        const finalAmount = Math.floor(amount * (1 + (this.meta ? this.meta.fortune * 0.05 : 0)));
+        const relicBonus = (this.relics && this.relics.includes('scavenger')) ? 0.3 : 0;
+        const finalAmount = Math.floor(amount * (1 + (this.meta ? this.meta.fortune * 0.05 : 0) + relicBonus));
         this.itemsOnGround.push({ isGold: true, amount: finalAmount, x, y, icon: '🪙', name: 'Gold Coins', popZ: 0, popVz: 3.5 + Math.random() });
     }
 
@@ -3042,6 +4288,24 @@ class DungeonEngine {
             sfx.playLoot();
             this.itemsOnGround.splice(lootIdx, 1);
             this.logMessage(`Picked up ${item.amount} Gold.`, 'log-loot');
+            this.updateStatsUI();
+            this.checkAchievements();
+        } else if (item.isRelic) {
+            this.itemsOnGround.splice(lootIdx, 1);
+            this.grantRelic(item.relicId);
+        } else if (item.isLore) {
+            this.itemsOnGround.splice(lootIdx, 1);
+            sfx.playLoot();
+            if (!this.meta.lore) this.meta.lore = [];
+            if (!this.meta.lore.includes(item.loreIdx)) {
+                this.meta.lore.push(item.loreIdx);
+                this.saveMeta();
+            }
+            const xpGain = 10 + this.level * 2;
+            this.player.xp += xpGain;
+            this.logMessage(`Lore Scrap recovered. (+${xpGain} XP)`, 'log-level');
+            this.showLoreToast(`📜 ${LORE_DB[item.loreIdx]}`);
+            this.checkLevelUp();
             this.updateStatsUI();
         } else if (item.isKey) {
             this.player.keys = (this.player.keys || 0) + 1;
@@ -3059,16 +4323,100 @@ class DungeonEngine {
         }
     }
 
+    // --- Boss Rush progression ---
+    advanceBossRush() {
+        this.bossRushIndex++;
+        if (this.bossRushIndex >= this.bossRushOrder.length) {
+            this.finishBossRush();
+            return;
+        }
+        // Brief respite between guardians - not a full heal, to keep the gauntlet tense
+        this.player.hp = Math.min(this.player.maxHp, this.player.hp + Math.ceil(this.player.maxHp * 0.35));
+        this.player.mp = Math.min(this.player.maxMp, this.player.mp + Math.ceil(this.player.maxMp * 0.35));
+        this.player.statuses = [];
+        this.logMessage('Guardian defeated! Brace yourself for the next...', 'log-level');
+        this.generateLevel();
+    }
+
+    finishBossRush() {
+        if (!this.meta.stats) this.meta.stats = {};
+        this.meta.stats.bossRushCleared = true;
+
+        const soulsEarned = 60 + (this.player.lvl || 1) * 3;
+        this.meta.souls += soulsEarned;
+        this.meta.stats.totalSoulsEarned = (this.meta.stats.totalSoulsEarned || 0) + soulsEarned;
+
+        const runMs = this.runStats ? this.runStats.activeMs : 0;
+        if (!this.meta.runHistory) this.meta.runHistory = [];
+        this.meta.runHistory.unshift({ d: Date.now(), cls: this.player.classType, depth: 0, lvl: this.player.lvl, kills: this.runStats ? this.runStats.kills : 0, ms: runMs, daily: false, mode: 'bossrush' });
+        if (this.meta.runHistory.length > 30) this.meta.runHistory.length = 30;
+
+        this.saveMeta();
+        this.checkAchievements();
+
+        this.gameOverHandled = true;
+        music.stop();
+        sfx.playVictory();
+        document.getElementById('bossrush-victory-souls').innerText = `+${soulsEarned} Archon Souls`;
+        document.getElementById('bossrush-victory-extra').innerText = `⏱ ${this.formatTime(runMs)} · ${this.player.classType.toUpperCase()} Lv${this.player.lvl}`;
+        document.getElementById('bossrush-victory-overlay').classList.remove('hidden');
+    }
+
     handleGameOver() {
         if (this.gameOverHandled) return;
         this.gameOverHandled = true;
+        music.stop();
+        if (this.paused) {
+            this.paused = false;
+            document.getElementById('pause-overlay').classList.add('hidden');
+        }
         sfx.playDefeat();
-        const soulsEarned = Math.floor(this.level * 3 + (this.player.lvl || 1) * 2 + (this.player.gold || 0) * 0.05);
+
+        const isEndless = this.endlessMode;
+        const scoreDepth = isEndless ? this.endlessWave : this.level;
+        const soulsEarned = Math.floor(scoreDepth * 3 + (this.player.lvl || 1) * 2 + (this.player.gold || 0) * 0.05);
         this.meta.souls += soulsEarned;
+        if (!this.meta.stats) this.meta.stats = {};
+        this.meta.stats.totalSoulsEarned = (this.meta.stats.totalSoulsEarned || 0) + soulsEarned;
+        if (this.dailyMode) this.meta.stats.dailyCompletions = (this.meta.stats.dailyCompletions || 0) + 1;
+
+        // Record the expedition in the persistent run history
+        const runMs = this.runStats ? this.runStats.activeMs : 0;
+        const kills = this.runStats ? this.runStats.kills : 0;
+        const mode = isEndless ? 'endless' : (this.bossRushMode ? 'bossrush' : (this.dailyMode ? 'daily' : 'normal'));
+        if (!this.meta.runHistory) this.meta.runHistory = [];
+        this.meta.runHistory.unshift({ d: Date.now(), cls: this.player.classType, depth: scoreDepth, lvl: this.player.lvl, kills, ms: runMs, daily: !!this.dailyMode, mode });
+        if (this.meta.runHistory.length > 30) this.meta.runHistory.length = 30;
+
+        // Daily challenge personal best
+        let dailyLine = '';
+        if (this.dailyMode && this.dailyKey) {
+            const prev = (this.meta.dailyBest && this.meta.dailyBest.date === this.dailyKey) ? this.meta.dailyBest : null;
+            if (!prev || this.level > prev.depth) {
+                this.meta.dailyBest = { date: this.dailyKey, depth: this.level, ms: runMs };
+                dailyLine = ` · 📅 New daily best: B${String(this.level).padStart(2, '0')}!`;
+            } else {
+                dailyLine = ` · 📅 Daily best: B${String(prev.depth).padStart(2, '0')}`;
+            }
+        }
+
         this.saveMeta();
-        document.getElementById('death-stats').innerText = `You descended to Depth B${this.level.toString().padStart(2, '0')}`;
+        this.checkAchievements();
+
+        let deathTitle;
+        if (isEndless) deathTitle = `You fell on Wave ${this.endlessWave}`;
+        else if (this.bossRushMode) deathTitle = `Fell to Guardian ${this.bossRushIndex + 1} of 3`;
+        else deathTitle = `You descended to Depth B${this.level.toString().padStart(2, '0')}`;
+
+        document.getElementById('death-stats').innerText = deathTitle;
         document.getElementById('death-souls').innerText = `+${soulsEarned} Archon Souls`;
+        document.getElementById('death-extra').innerText = `⏱ ${this.formatTime(runMs)} · ⚔️ ${kills} kills${dailyLine}`;
         document.getElementById('death-overlay').classList.remove('hidden');
+    }
+
+    formatTime(ms) {
+        const s = Math.floor((ms || 0) / 1000);
+        return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
     }
 
     generateProceduralItem(forcedRarity = null) {
@@ -3104,7 +4452,7 @@ class DungeonEngine {
         const item = this.inventory[index]; if (!item) return;
         const type = item.type; const current = this.equipped[type];
         this.equipped[type] = item; this.inventory[index] = current;
-        if (type === 'accessory') this.player.fovRadius = 6 + Math.floor(item.statBonus / 2);
+        if (type === 'accessory') this.player.fovAccessory = Math.floor(item.statBonus / 2);
         sfx.playLoot(); this.logMessage(`Equipped: ${item.name}`, 'log-system');
         this.updateInventoryUI(); this.updateStatsUI(); this.updateFOV();
     }
@@ -3113,7 +4461,7 @@ class DungeonEngine {
         const item = this.equipped[slotType]; if (!item) return;
         if (this.addItemToInventory(item)) {
             this.equipped[slotType] = null;
-            if (slotType === 'accessory') this.player.fovRadius = 6;
+            if (slotType === 'accessory') this.player.fovAccessory = 0;
             sfx.playLoot(); this.updateInventoryUI(); this.updateStatsUI(); this.updateFOV();
         }
     }
@@ -3129,7 +4477,8 @@ class DungeonEngine {
     getPlayerAttack() {
         let w = this.equipped.weapon ? this.equipped.weapon.statBonus : 0;
         let buff = this.player.battleCryTurns > 0 ? 4 : 0;
-        return this.player.baseAtk + w + buff;
+        const glass = (this.relics && this.relics.includes('glass_cannon')) ? 1.3 : 1;
+        return Math.round((this.player.baseAtk + w + buff) * glass);
     }
 
     getPlayerDefense() {
@@ -3213,6 +4562,39 @@ class DungeonEngine {
         if (visibleTalents === 0) {
             this.charTalentsList.innerHTML = '<div class="talent-badge" style="color:var(--text-muted); justify-content: center;">None Unlocked</div>';
         }
+
+        // Relics
+        if (this.charRelicsList) {
+            this.charRelicsList.innerHTML = '';
+            if (this.relics.length === 0) {
+                this.charRelicsList.innerHTML = '<div class="talent-badge" style="color:var(--text-muted); justify-content: center;">None Found</div>';
+            } else {
+                this.relics.forEach(id => {
+                    const r = RELIC_POOL.find(x => x.id === id);
+                    if (!r) return;
+                    const badge = document.createElement('div');
+                    badge.className = 'talent-badge';
+                    badge.title = r.desc;
+                    badge.innerHTML = `<span>${r.icon}</span> <span>${r.name}</span>`;
+                    this.charRelicsList.appendChild(badge);
+                });
+            }
+        }
+
+        // Companions
+        if (this.charAlliesList) {
+            this.charAlliesList.innerHTML = '';
+            if (!this.allies || this.allies.length === 0) {
+                this.charAlliesList.innerHTML = '<div class="talent-badge" style="color:var(--text-muted); justify-content: center;">None</div>';
+            } else {
+                this.allies.forEach(a => {
+                    const badge = document.createElement('div');
+                    badge.className = 'talent-badge';
+                    badge.innerHTML = `<span>${a.icon}</span> <span>${a.name}</span>${a.turnsLeft !== undefined ? `<span style="color:var(--text-muted); font-size:10px; margin-left:auto;">${a.turnsLeft}t</span>` : ''}`;
+                    this.charAlliesList.appendChild(badge);
+                });
+            }
+        }
     }
 
     updateInventoryUI() {
@@ -3255,8 +4637,8 @@ class DungeonEngine {
         this.mmCtx.fillStyle = 'green';
         this.mmCtx.fillRect(this.player.x*scale, this.player.y*scale, scale, scale);
         
-        // Draw stairs if discovered
-        if(this.fog[this.stairs.y][this.stairs.x] > 0) {
+        // Draw stairs if discovered (Endless Mode has no stairs - sentinel {x:-1,y:-1})
+        if(this.stairs.x >= 0 && this.stairs.y >= 0 && this.fog[this.stairs.y][this.stairs.x] > 0) {
             this.mmCtx.fillStyle = '#38bdf8';
             this.mmCtx.fillRect(this.stairs.x*scale, this.stairs.y*scale, scale, scale);
         }
@@ -3267,10 +4649,135 @@ class DungeonEngine {
         this.logContainer.appendChild(msg); this.logContainer.scrollTop = this.logContainer.scrollHeight;
     }
 
+    // --- Pause & menu screens ---
+    isMenuOverlayOpen() {
+        return ['pause-overlay', 'settings-overlay', 'bestiary-overlay', 'history-overlay', 'achievements-overlay'].some(id => !document.getElementById(id).classList.contains('hidden'));
+    }
+
+    togglePause() {
+        if (!this.player || this.player.hp <= 0 || this.gameOverHandled) return;
+        if (!document.getElementById('start-overlay').classList.contains('hidden')) return;
+        if (!document.getElementById('death-overlay').classList.contains('hidden')) return;
+        this.paused = !this.paused;
+        document.getElementById('pause-overlay').classList.toggle('hidden', !this.paused);
+        if (this.paused) {
+            document.getElementById('pause-run-info').innerText =
+                `Depth B${this.level.toString().padStart(2, '0')} · ${this.player.classType.toUpperCase()} Lv${this.player.lvl} · ⏱ ${this.formatTime(this.runStats ? this.runStats.activeMs : 0)}`;
+        }
+        music.duck(this.paused);
+    }
+
+    openMenuScreen(id, from) {
+        this.menuReturn = from;
+        if (from === 'start') document.getElementById('start-overlay').classList.add('hidden');
+        if (from === 'pause') document.getElementById('pause-overlay').classList.add('hidden');
+        if (id === 'bestiary-overlay') this.renderBestiary();
+        if (id === 'history-overlay') this.renderHistory();
+        if (id === 'achievements-overlay') this.renderAchievements();
+        document.getElementById(id).classList.remove('hidden');
+    }
+
+    closeMenuScreen(id) {
+        document.getElementById(id).classList.add('hidden');
+        if (this.menuReturn === 'pause' && this.paused) document.getElementById('pause-overlay').classList.remove('hidden');
+        else if (this.menuReturn === 'start') document.getElementById('start-overlay').classList.remove('hidden');
+    }
+
+    handleEscape() {
+        const isOpen = id => !document.getElementById(id).classList.contains('hidden');
+        for (const id of ['settings-overlay', 'bestiary-overlay', 'history-overlay', 'achievements-overlay']) {
+            if (isOpen(id)) { this.closeMenuScreen(id); return; }
+        }
+        if (isOpen('shop-overlay')) { document.getElementById('shop-overlay').classList.add('hidden'); return; }
+        if (isOpen('anvil-overlay')) { document.getElementById('anvil-overlay').classList.add('hidden'); return; }
+        if (isOpen('hub-overlay')) { document.getElementById('hub-overlay').classList.add('hidden'); this.showClassScreen(); return; }
+        if (isOpen('start-overlay') || isOpen('death-overlay') || isOpen('talent-overlay') || isOpen('bossrush-victory-overlay')) return;
+        this.togglePause();
+    }
+
+    renderBestiary() {
+        const list = document.getElementById('bestiary-list');
+        list.innerHTML = '';
+        const keys = Object.keys(BESTIARY_DB);
+        let unlocked = 0;
+        keys.forEach(k => {
+            const e = BESTIARY_DB[k];
+            const kills = (this.meta.bestiary && this.meta.bestiary[k]) || 0;
+            const known = kills > 0;
+            if (known) unlocked++;
+            const el = document.createElement('div');
+            el.className = 'bestiary-entry' + (known ? '' : ' locked');
+            el.innerHTML = known
+                ? `<span class="be-icon">${e.icon}</span><div><div class="be-name">${e.name}<span class="be-kills">×${kills}</span></div><div class="be-lore">${e.lore}</div></div>`
+                : `<span class="be-icon">❓</span><div><div class="be-name">???</div><div class="be-lore">Defeat one to record its nature.</div></div>`;
+            list.appendChild(el);
+        });
+        document.getElementById('bestiary-progress').innerText =
+            `${unlocked} / ${keys.length} recorded · ${(this.meta.lore || []).length} / ${LORE_DB.length} lore scraps`;
+
+        const loreList = document.getElementById('bestiary-lore-list');
+        loreList.innerHTML = '';
+        const found = (this.meta.lore || []).slice().sort((a, b) => a - b);
+        if (found.length === 0) {
+            loreList.innerHTML = '<div class="lore-entry" style="color:var(--text-muted);">No lore scraps recovered yet. Watch for 📜 in the dungeon.</div>';
+        } else {
+            found.forEach(i => {
+                const el = document.createElement('div');
+                el.className = 'lore-entry';
+                el.innerHTML = `<span>📜</span> <em>${LORE_DB[i]}</em>`;
+                loreList.appendChild(el);
+            });
+        }
+    }
+
+    renderHistory() {
+        const hist = this.meta.runHistory || [];
+        const summary = document.getElementById('history-summary');
+        const list = document.getElementById('history-list');
+        list.innerHTML = '';
+        if (hist.length === 0) {
+            summary.innerText = 'No expeditions recorded yet.';
+            return;
+        }
+        const normalRuns = hist.filter(r => !r.mode || r.mode === 'normal' || r.mode === 'daily');
+        const best = normalRuns.length ? normalRuns.reduce((a, r) => (r.depth > a.depth ? r : a), normalRuns[0]) : null;
+        const totalKills = hist.reduce((s, r) => s + (r.kills || 0), 0);
+        summary.innerText = `${hist.length} runs${best ? ` · Deepest: B${String(best.depth).padStart(2, '0')} (${best.cls.toUpperCase()})` : ''} · ${totalKills} total kills`;
+        hist.forEach(r => {
+            const el = document.createElement('div');
+            el.className = 'history-row';
+            let depthLabel, modeTag;
+            if (r.mode === 'bossrush') { depthLabel = 'CLEAR'; modeTag = ' ⚔️'; }
+            else if (r.mode === 'endless') { depthLabel = `W${r.depth}`; modeTag = ' 🌊'; }
+            else { depthLabel = `B${String(r.depth).padStart(2, '0')}`; modeTag = r.daily ? ' 📅' : ''; }
+            el.innerHTML = `<span class="hr-depth">${depthLabel}</span><span class="hr-cls">${r.cls.toUpperCase()}${modeTag}</span><span class="hr-meta">Lv${r.lvl} · ${r.kills} kills · ${this.formatTime(r.ms)}</span><span class="hr-date">${new Date(r.d).toLocaleDateString()}</span>`;
+            list.appendChild(el);
+        });
+    }
+
+    renderAchievements() {
+        const list = document.getElementById('achievements-list');
+        list.innerHTML = '';
+        const unlocked = this.meta.achievements || {};
+        let count = 0;
+        ACHIEVEMENTS_DB.forEach(a => {
+            const done = !!unlocked[a.id];
+            if (done) count++;
+            const el = document.createElement('div');
+            el.className = 'bestiary-entry' + (done ? '' : ' locked');
+            const dateStr = done ? new Date(unlocked[a.id]).toLocaleDateString() : '';
+            el.innerHTML = `<span class="be-icon">${done ? a.icon : '🔒'}</span><div><div class="be-name">${a.name}${done ? `<span class="be-kills">${dateStr}</span>` : ''}</div><div class="be-lore">${a.desc}</div></div>`;
+            list.appendChild(el);
+        });
+        document.getElementById('achievements-progress').innerText = `${count} / ${ACHIEVEMENTS_DB.length} unlocked`;
+    }
+
     bindInput() {
         const moves = { 'ArrowUp': {x:0, y:-1}, 'w': {x:0, y:-1}, 'ArrowDown': {x:0, y:1}, 's': {x:0, y:1}, 'ArrowLeft': {x:-1, y:0}, 'a': {x:-1, y:0}, 'ArrowRight': {x:1, y:0}, 'd': {x:1, y:0} };
         document.addEventListener('keydown', e => {
+            if (e.key === 'Escape') { e.preventDefault(); this.handleEscape(); return; }
             if (document.getElementById('talent-overlay').classList.contains('hidden') === false) return; // Block input during draft
+            if (this.paused || this.isMenuOverlayOpen()) return; // Block input while paused / in menus
             if (this.transition) return; // Block input during level transition wipe
             if (moves[e.key]) { e.preventDefault(); this.executeTurn(moves[e.key].x, moves[e.key].y); }
             if (e.key === '1') { e.preventDefault(); this.useSkill(); } // Skill hotkey
@@ -3278,9 +4785,9 @@ class DungeonEngine {
             if (e.key === '3') { e.preventDefault(); this.usePotion('mp'); } // MP Potion hotkey
             if (e.key === '4') { e.preventDefault(); this.useSkill2(); } // Secondary skill hotkey
         });
-        
+
         const handleTapMove = (clientX, clientY) => {
-            if (!this.player || this.player.hp <= 0 || this.transition) return;
+            if (!this.player || this.player.hp <= 0 || this.transition || this.paused || this.isMenuOverlayOpen()) return;
             const rect = this.canvas.getBoundingClientRect();
             const mouseX = (clientX - rect.left) * (this.canvas.width / rect.width);
             const mouseY = (clientY - rect.top) * (this.canvas.height / rect.height);
@@ -3321,9 +4828,25 @@ class DungeonEngine {
         document.querySelectorAll('.class-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const c = e.currentTarget.getAttribute('data-class');
-                this.startGame(c);
+                const mode = this.pendingMode;
+                this.pendingMode = null;
+                if (mode === 'bossrush') this.startBossRush(c);
+                else if (mode === 'endless') this.startEndless(c);
+                else this.startGame(c);
             });
         });
+
+        document.getElementById('bossrush-btn').addEventListener('click', () => {
+            const unlocked = !!(this.meta.stats && this.meta.stats.bossesDefeated && this.meta.stats.bossesDefeated.length >= 1);
+            if (!unlocked) { this.logMessage('Defeat a floor guardian first to unlock Boss Rush.', 'log-system'); return; }
+            this.pendingMode = this.pendingMode === 'bossrush' ? null : 'bossrush';
+            this.updateModeSelectUI();
+        });
+        document.getElementById('endless-btn').addEventListener('click', () => {
+            this.pendingMode = this.pendingMode === 'endless' ? null : 'endless';
+            this.updateModeSelectUI();
+        });
+        document.getElementById('bossrush-victory-btn').addEventListener('click', () => this.showClassScreen());
 
         // Quick belt clicks
         document.getElementById('ability-1').addEventListener('click', () => this.useSkill());
@@ -3351,6 +4874,47 @@ class DungeonEngine {
         const muteBtn = document.getElementById('mute-btn');
         muteBtn.addEventListener('click', () => { sfx.muted = !sfx.muted; muteBtn.innerHTML = sfx.muted ? '<span>🔇</span> Unmute SFX' : '<span>🔊</span> Mute SFX'; });
 
+        // Pause menu
+        document.getElementById('pause-btn').addEventListener('click', () => this.togglePause());
+        document.getElementById('pause-resume-btn').addEventListener('click', () => this.togglePause());
+        document.getElementById('pause-settings-btn').addEventListener('click', () => this.openMenuScreen('settings-overlay', 'pause'));
+        document.getElementById('pause-bestiary-btn').addEventListener('click', () => this.openMenuScreen('bestiary-overlay', 'pause'));
+        document.getElementById('pause-history-btn').addEventListener('click', () => this.openMenuScreen('history-overlay', 'pause'));
+        document.getElementById('pause-achievements-btn').addEventListener('click', () => this.openMenuScreen('achievements-overlay', 'pause'));
+        document.getElementById('pause-abandon-btn').addEventListener('click', () => {
+            this.paused = false;
+            document.getElementById('pause-overlay').classList.add('hidden');
+            music.duck(false);
+            this.player.hp = 0;
+            this.handleGameOver();
+        });
+
+        // Start-screen menus & daily challenge
+        document.getElementById('daily-btn').addEventListener('click', () => this.startDailyChallenge());
+        document.getElementById('start-bestiary-btn').addEventListener('click', () => this.openMenuScreen('bestiary-overlay', 'start'));
+        document.getElementById('start-history-btn').addEventListener('click', () => this.openMenuScreen('history-overlay', 'start'));
+        document.getElementById('start-achievements-btn').addEventListener('click', () => this.openMenuScreen('achievements-overlay', 'start'));
+        document.getElementById('start-settings-btn').addEventListener('click', () => this.openMenuScreen('settings-overlay', 'start'));
+        document.getElementById('bestiary-back-btn').addEventListener('click', () => this.closeMenuScreen('bestiary-overlay'));
+        document.getElementById('history-back-btn').addEventListener('click', () => this.closeMenuScreen('history-overlay'));
+        document.getElementById('achievements-back-btn').addEventListener('click', () => this.closeMenuScreen('achievements-overlay'));
+        document.getElementById('settings-back-btn').addEventListener('click', () => this.closeMenuScreen('settings-overlay'));
+
+        // Settings controls
+        document.getElementById('set-sfx').addEventListener('input', e => {
+            this.settings.sfx = e.target.value / 100; this.saveSettings(); this.applySettings();
+        });
+        document.getElementById('set-music').addEventListener('input', e => {
+            this.settings.music = e.target.value / 100; this.saveSettings(); this.applySettings();
+        });
+        document.getElementById('set-shake').addEventListener('input', e => {
+            this.settings.shake = e.target.value / 100; this.saveSettings(); this.applySettings();
+        });
+        document.getElementById('set-colorblind').addEventListener('change', e => {
+            this.settings.colorblind = e.target.checked; this.saveSettings(); this.applySettings();
+            this.updateInventoryUI();
+        });
+
         const hudBtn = document.getElementById('hud-toggle-btn');
         const dashboard = document.querySelector('.dashboard');
         hudBtn.addEventListener('click', () => {
@@ -3364,7 +4928,12 @@ class DungeonEngine {
         });
     }
 
-    triggerCameraShake(intensity, duration) { this.cameraShake.intensity = intensity; this.cameraShake.duration = duration; }
+    triggerCameraShake(intensity, duration) {
+        const scale = this.settings ? this.settings.shake : 1;
+        if (scale <= 0) return;
+        this.cameraShake.intensity = intensity * scale;
+        this.cameraShake.duration = duration;
+    }
 
     triggerHitFlash(entity) { entity.hitFlash = 1; if (entity.aware === false) entity.aware = true; }
     triggerKnockback(entity, fromX, fromY) {
@@ -3487,6 +5056,24 @@ class DungeonEngine {
         const dt = now - this.lastFrameTime;
         this.lastFrameTime = now;
 
+        music.update(dt);
+
+        // Run timer (frozen while paused or after death)
+        if (this.runStats && this.player && this.player.hp > 0 && !this.paused && !this.gameOverHandled) {
+            this.runStats.activeMs += dt;
+            const secs = Math.floor(this.runStats.activeMs / 1000);
+            if (secs !== this.lastTimerSecs) {
+                this.lastTimerSecs = secs;
+                if (this.runTimerEl) this.runTimerEl.innerText = `⏱ ${this.formatTime(this.runStats.activeMs)}`;
+            }
+        }
+
+        if (this.paused) {
+            this.render();
+            requestAnimationFrame(() => this.gameLoop());
+            return;
+        }
+
         if (this.hitStopTimer > 0) {
             this.hitStopTimer -= dt;
             this.render();
@@ -3523,6 +5110,24 @@ class DungeonEngine {
                     if (this.hasStatus(e, 'burn') && Math.random() < 0.12) {
                         this.particles.push({ x: e.visualX*this.tileSize+16+(Math.random()-0.5)*8, y: e.visualY*this.tileSize+10, vx: (Math.random()-0.5)*0.4, vy: -0.6-Math.random()*0.4, life: 0.8, decay: 0.05, color: '#f97316', size: 2, type: 'dust' });
                     }
+                }
+            }
+
+            this.allies.forEach(a => {
+                a.visualX += (a.x - a.visualX) * 0.18; a.visualY += (a.y - a.visualY) * 0.18;
+                this.updateEntityAnim(a);
+            });
+
+            // Endless Mode: once a wave's dying enemies finish their death animation,
+            // start a short breather then spawn the next wave
+            if (this.endlessMode && this.player.hp > 0 && this.enemies.length === 0 && this.endlessBreatherTimer <= 0 && !this.transition) {
+                this.startEndlessBreather();
+            }
+            if (this.endlessBreatherTimer > 0 && this.player.hp > 0) {
+                this.endlessBreatherTimer -= dt;
+                if (this.endlessBreatherTimer <= 0) {
+                    this.endlessBreatherTimer = 0;
+                    this.spawnNextEndlessWave();
                 }
             }
 
@@ -3676,6 +5281,14 @@ class DungeonEngine {
             }
         });
 
+        this.playerTraps.forEach(t => {
+            if (t.x >= startX && t.x < endX && t.y >= startY && t.y < endY && this.fog[t.y][t.x] === 2) {
+                this.ctx.globalAlpha = 0.75;
+                this.ctx.font = '16px serif'; this.ctx.fillText('🪤', t.x*this.tileSize+ox+8, t.y*this.tileSize+oy+22);
+                this.ctx.globalAlpha = 1;
+            }
+        });
+
         this.chests.forEach(chest => {
             if (chest.x >= startX && chest.x < endX && chest.y >= startY && chest.y < endY && this.fog[chest.y][chest.x] > 0) {
                 const cx = chest.x * this.tileSize + ox; const cy = chest.y * this.tileSize + oy;
@@ -3696,7 +5309,7 @@ class DungeonEngine {
                 let bobY;
                 if (item.popVz !== undefined && (item.popZ > 0.5 || item.popVz !== 0)) bobY = -(item.popZ || 0);
                 else bobY = -Math.abs(Math.sin(Date.now()*0.0025 + item.x*13 + item.y*7)) * 3;
-                this.ctx.shadowBlur = 8; this.ctx.shadowColor = item.isGold ? '#facc15' : (RARITY_COLORS[item.rarity] || '#94a3b8');
+                this.ctx.shadowBlur = 8; this.ctx.shadowColor = item.isGold ? '#facc15' : item.isRelic ? '#f0abfc' : this.getRarityColor(item.rarity);
                 this.ctx.font = '16px serif'; this.ctx.fillText(item.icon, item.x*this.tileSize+ox+8, item.y*this.tileSize+oy+22+bobY);
                 this.ctx.shadowBlur = 0;
             }
@@ -3778,6 +5391,31 @@ class DungeonEngine {
             }
         });
 
+        this.allies.forEach(a => {
+            if (a.x >= startX && a.x < endX && a.y >= startY && a.y < endY && this.fog[a.y][a.x] === 2) {
+                const ax = a.visualX * this.tileSize + ox + (a.knockX||0);
+                const ay = a.visualY * this.tileSize + oy + (a.knockY||0);
+                const distMoving = Math.hypot(a.x-a.visualX, a.y-a.visualY);
+                const bob = distMoving > 0.02 ? -Math.sin(Math.PI*(1-Math.min(1,distMoving)))*4 : 0;
+                const breathe = distMoving <= 0.02 ? 1 + Math.sin(Date.now()*0.0018 + a.x*3+a.y*5)*0.05 : 1;
+
+                this.ctx.save();
+                this.ctx.translate(ax+16, ay+16+bob);
+                this.ctx.scale(1, breathe);
+                this.ctx.shadowBlur = 8; this.ctx.shadowColor = a.color;
+                this.ctx.fillStyle = a.color; this.ctx.globalAlpha = 0.85;
+                this.ctx.beginPath(); this.ctx.arc(0, 0, 9, 0, Math.PI*2); this.ctx.fill();
+                this.ctx.globalAlpha = 1; this.ctx.shadowBlur = 0;
+                if (a.hitFlash > 0) {
+                    this.ctx.fillStyle = `rgba(255,255,255,${a.hitFlash})`;
+                    this.ctx.beginPath(); this.ctx.arc(0, 0, 9, 0, Math.PI*2); this.ctx.fill();
+                }
+                this.ctx.font = '13px "Outfit"'; this.ctx.textAlign = 'center'; this.ctx.fillText(a.icon, 0, 4);
+                this.ctx.textAlign = 'left';
+                this.ctx.restore();
+            }
+        });
+
         const distMovingP = Math.hypot(this.player.x-this.player.visualX, this.player.y-this.player.visualY);
         const bobP = distMovingP > 0.02 ? -Math.sin(Math.PI*(1-Math.min(1,distMovingP)))*4 : 0;
         const breatheP = distMovingP <= 0.02 ? 1 + Math.sin(Date.now()*0.0018)*0.05 : 1;
@@ -3786,7 +5424,7 @@ class DungeonEngine {
         this.ctx.save();
         this.ctx.translate(px+16, py+16+bobP);
         this.ctx.scale(1, breatheP);
-        this.ctx.fillStyle = this.player.classType === 'warrior' ? '#ef4444' : this.player.classType === 'mage' ? '#a855f7' : '#34d399';
+        this.ctx.fillStyle = PLAYER_COLORS[this.player.classType] || '#34d399';
         this.ctx.beginPath(); this.ctx.arc(0, 0, 11, 0, Math.PI*2); this.ctx.fill();
         if (this.player.hitFlash > 0) {
             this.ctx.fillStyle = `rgba(255,255,255,${this.player.hitFlash})`;
@@ -3896,7 +5534,7 @@ class DungeonEngine {
         const pVisualX = this.player.visualX * this.tileSize + this.tileSize / 2 + ox;
         const pVisualY = this.player.visualY * this.tileSize + this.tileSize / 2 + oy;
         const flicker = 1.0 + Math.sin(Date.now() * 0.008) * 0.03;
-        const playerLightRadius = (this.player.fovRadius * this.tileSize) * flicker;
+        const playerLightRadius = (this.getFovRadius() * this.tileSize) * flicker;
         const radGrad = lctx.createRadialGradient(pVisualX, pVisualY, 10, pVisualX, pVisualY, playerLightRadius);
         radGrad.addColorStop(0, 'rgba(0, 0, 0, 1.0)'); radGrad.addColorStop(0.3, 'rgba(0, 0, 0, 0.8)'); radGrad.addColorStop(1, 'rgba(0, 0, 0, 0.0)');
         lctx.fillStyle = radGrad; lctx.beginPath(); lctx.arc(pVisualX, pVisualY, playerLightRadius, 0, Math.PI * 2); lctx.fill();
@@ -3930,6 +5568,7 @@ document.querySelectorAll('.dpad-btn').forEach(btn => {
         e.preventDefault();
         if (document.getElementById('talent-overlay').classList.contains('hidden') === false) return; // Block input during draft
         if (game.transition) return; // Block input during level transition wipe
+        if (game.paused || game.isMenuOverlayOpen()) return; // Block input while paused / in menus
         game.executeTurn(dx, dy);
     };
     btn.addEventListener('touchstart', press, { passive: false });
