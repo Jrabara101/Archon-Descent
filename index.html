@@ -27,6 +27,7 @@
             --text-main: #f8fafc;
             --text-muted: #64748b;
             --canvas-max-size: min(100%, calc(100vh - 230px));
+            --ui-scale: 1;
         }
 
         * {
@@ -92,7 +93,8 @@
             position: absolute;
             bottom: 20px;
             left: 50%;
-            transform: translateX(-50%);
+            transform: translateX(-50%) scale(var(--ui-scale));
+            transform-origin: bottom center;
             z-index: 10;
             display: flex;
             gap: 12px;
@@ -168,7 +170,14 @@
             border-radius: 7px;
         }
 
-        .belt-slot.hidden { display: none; }
+        #hub-overlay.hub-tier-1 { box-shadow: inset 0 0 80px rgba(234, 179, 8, 0.10); }
+        #hub-overlay.hub-tier-2 { box-shadow: inset 0 0 130px rgba(234, 179, 8, 0.18); }
+        #hub-overlay.hub-tier-3 { box-shadow: inset 0 0 200px rgba(234, 179, 8, 0.30); }
+        #hub-overlay.hub-tier-1 .screen-title, #hub-overlay.hub-tier-2 .screen-title, #hub-overlay.hub-tier-3 .screen-title {
+            text-shadow: 0 0 16px rgba(234, 179, 8, 0.6);
+        }
+
+        .belt-slot.hidden, .glowing-btn.hidden { display: none; }
         .belt-slot.ult-ready {
             box-shadow: 0 0 14px var(--rarity-legendary);
             border-color: var(--rarity-legendary);
@@ -297,6 +306,7 @@
             flex-direction: column;
             overflow: hidden;
             gap: 0;
+            transform-origin: top right;
 
             /* Slide transition */
             transform: translateX(400px);
@@ -306,7 +316,7 @@
         }
 
         .dashboard.visible {
-            transform: translateX(0);
+            transform: translateX(0) scale(var(--ui-scale));
             opacity: 1;
             pointer-events: auto;
         }
@@ -1144,6 +1154,7 @@
                 </div>
                 <div class="depth-indicator" id="dungeon-level">DUNGEON DEPTH: B01</div>
                 <div id="run-timer" style="font-size: 11px; color: var(--text-muted); font-family: 'Fira Code', monospace;">⏱ 00:00</div>
+                <div id="bounty-badge" style="font-size: 11px; color: var(--rarity-legendary); font-family: 'Fira Code', monospace;"></div>
             </div>
             
             <div class="canvas-container" id="canvas-container">
@@ -1159,11 +1170,14 @@
                         <button class="glowing-btn class-btn" data-class="necromancer" style="background:#581c87;">NECROMANCER<br><span style="font-size:10px; opacity:0.8;">Dark Magic, Raise Skeleton</span></button>
                         <button class="glowing-btn class-btn" data-class="ranger" style="background:#14b8a6; color:#0f172a;">RANGER<br><span style="font-size:10px; opacity:0.8;">High Vision, Piercing Shot</span></button>
                     </div>
+                    <button class="glowing-btn hidden" id="resume-run-btn" style="margin-top:6px; background:#065f46; color:#d1fae5; border:1px solid #10b981;">📂 RESUME EXPEDITION</button>
                     <button class="glowing-btn" id="open-hub-btn" style="margin-top:8px; background:#1e2942; color:var(--rarity-legendary); border:1px solid var(--rarity-legendary);">🏛️ ARCHON HUB <span id="start-souls-count" style="font-family:'Fira Code', monospace;">(0 Souls)</span></button>
                     <button class="glowing-btn" id="daily-btn" style="margin-top:2px; background:#312e81; color:#c7d2fe; border:1px solid #6366f1;">📅 DAILY CHALLENGE<br><span id="daily-date" style="font-family:'Fira Code', monospace; font-size:10px; opacity:0.9;"></span></button>
                     <div style="display:flex; gap:10px; margin-top:2px;">
                         <button class="glowing-btn small-menu-btn" id="bossrush-btn" style="border:1px solid var(--accent-red); color:var(--accent-red);" title="Defeat a floor guardian to unlock">⚔️ BOSS RUSH</button>
                         <button class="glowing-btn small-menu-btn" id="endless-btn" style="border:1px solid var(--accent-green); color:var(--accent-green);">🌊 ENDLESS MODE</button>
+                        <button class="glowing-btn small-menu-btn" id="mutators-btn" style="border:1px solid var(--rarity-epic); color:var(--rarity-epic);" title="Optional run modifiers for bonus Archon Souls">🎲 MUTATORS<span id="mutators-count-badge"></span></button>
+                        <button class="glowing-btn small-menu-btn" id="trials-btn" style="border:1px solid #fb923c; color:#fb923c;" title="Fixed-modifier challenge dungeons for cosmetic titles">🏵️ TRIALS<span id="trials-count-badge"></span></button>
                     </div>
                     <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:10px; margin-top:2px; max-width:min(90vw, 460px);">
                         <button class="glowing-btn small-menu-btn" id="start-bestiary-btn">📖 Bestiary</button>
@@ -1175,6 +1189,7 @@
 
                 <!-- Overlay Archon Hub (Metaprogression) -->
                 <div class="screen-overlay hidden" id="hub-overlay">
+                    <div id="hub-banners" style="font-size:20px; letter-spacing:6px; margin-bottom:4px; min-height:24px;"></div>
                     <div class="screen-title" style="color: var(--rarity-legendary);">ARCHON HUB</div>
                     <div class="screen-subtitle">Spend Archon Souls on permanent upgrades — <span id="hub-souls-count" style="color:var(--rarity-legendary); font-weight:800;">0</span> Souls available</div>
                     <div style="display:flex; flex-direction:column; gap:8px; width:80%; max-width:340px;" id="hub-items"></div>
@@ -1213,7 +1228,10 @@
                     <div class="screen-subtitle" id="death-stats">You reached Depth B01</div>
                     <div class="screen-subtitle" id="death-souls" style="color: var(--rarity-legendary);">+0 Archon Souls</div>
                     <div class="screen-subtitle" id="death-extra" style="font-family:'Fira Code', monospace; font-size:12px;"></div>
-                    <button class="glowing-btn" id="restart-btn">Descend Again</button>
+                    <div style="display:flex; gap:12px;">
+                        <button class="glowing-btn" id="restart-btn">Descend Again</button>
+                        <button class="glowing-btn small-menu-btn" id="death-share-btn">📸 Share Build</button>
+                    </div>
                 </div>
 
                 <!-- Overlay Boss Rush Victory -->
@@ -1222,9 +1240,10 @@
                     <div class="screen-subtitle" id="bossrush-victory-subtitle">All three floor guardians have fallen.</div>
                     <div class="screen-subtitle" id="bossrush-victory-souls" style="color: var(--rarity-legendary);">+0 Archon Souls</div>
                     <div class="screen-subtitle" id="bossrush-victory-extra" style="font-family:'Fira Code', monospace; font-size:12px;"></div>
-                    <div style="display:flex; gap:12px;">
+                    <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:12px;">
                         <button class="glowing-btn" id="bossrush-ascend-btn" style="background:#7c2d12; color:#fed7aa; border:1px solid #f97316;">🔥 Ascend &amp; Continue</button>
                         <button class="glowing-btn" id="bossrush-victory-btn" style="background:#475569;">Return to Hub</button>
+                        <button class="glowing-btn small-menu-btn" id="bossrush-share-btn">📸 Share Build</button>
                     </div>
                 </div>
 
@@ -1261,6 +1280,15 @@
                         <div class="settings-row"><label>🎵 Music Volume</label><input type="range" id="set-music" min="0" max="100" value="40"></div>
                         <div class="settings-row"><label>📳 Screen Shake</label><input type="range" id="set-shake" min="0" max="100" value="100"></div>
                         <div class="settings-row"><label>👁️ Colorblind Rarity Colors</label><input type="checkbox" id="set-colorblind"></div>
+                        <div class="settings-row"><label>🔍 UI Scale</label><input type="range" id="set-uiscale" min="70" max="130" step="10" value="100"></div>
+                        <div class="settings-row">
+                            <label>💾 Save Data</label>
+                            <div style="display:flex; gap:8px;">
+                                <button class="glowing-btn small-menu-btn" id="export-save-btn">Export</button>
+                                <button class="glowing-btn small-menu-btn" id="import-save-btn">Import</button>
+                                <input type="file" id="import-save-input" accept="application/json" style="display:none;">
+                            </div>
+                        </div>
                     </div>
                     <button class="glowing-btn" id="settings-back-btn" style="background:#475569;">Back</button>
                 </div>
@@ -1291,6 +1319,30 @@
                     <div class="screen-subtitle" id="achievements-progress">0 / 0 unlocked</div>
                     <div class="codex-scroll" id="achievements-list"></div>
                     <button class="glowing-btn" id="achievements-back-btn" style="background:#475569;">Back</button>
+                </div>
+
+                <!-- Overlay Mutator Select -->
+                <div class="screen-overlay hidden" id="mutator-select-overlay">
+                    <div class="screen-title" style="color: var(--rarity-epic); font-size:14px;">CHALLENGE MUTATORS</div>
+                    <div class="screen-subtitle">Stack modifiers for bonus Archon Souls on your next standard descent.</div>
+                    <div class="codex-scroll" id="mutator-list" style="display:flex; flex-direction:column; gap:8px;"></div>
+                    <button class="glowing-btn" id="mutator-confirm-btn" style="background:#475569;">Done</button>
+                </div>
+
+                <!-- Overlay Trials Select -->
+                <div class="screen-overlay hidden" id="trials-select-overlay">
+                    <div class="screen-title" style="color: #fb923c; font-size:14px;">ARCHON TRIALS</div>
+                    <div class="screen-subtitle">Fixed, hand-tuned gauntlets. Clear one for a permanent cosmetic title — no Archon Souls at stake.</div>
+                    <div class="codex-scroll" id="trials-list" style="display:flex; flex-direction:column; gap:8px;"></div>
+                    <button class="glowing-btn" id="trials-back-btn" style="background:#475569;">Back</button>
+                </div>
+
+                <!-- Overlay Trial Victory -->
+                <div class="screen-overlay holo hidden" id="trial-victory-overlay">
+                    <div class="screen-title" style="color: #fb923c;">TRIAL CLEARED!</div>
+                    <div class="screen-subtitle" id="trial-victory-subtitle"></div>
+                    <div class="screen-subtitle" id="trial-victory-title" style="color: var(--rarity-legendary);"></div>
+                    <button class="glowing-btn" id="trial-victory-btn" style="background:#475569;">Return to Hub</button>
                 </div>
 
                 <canvas id="gameCanvas" width="512" height="512"></canvas>
@@ -1778,6 +1830,10 @@ class TextureCache {
 // ============================================================================
 const RARITY_COLORS = { common: '#94a3b8', rare: '#3b82f6', epic: '#a855f7', legendary: '#eab308' };
 const PLAYER_COLORS = { warrior: '#ef4444', mage: '#a855f7', rogue: '#34d399', paladin: '#facc15', necromancer: '#581c87', ranger: '#14b8a6' };
+const ABILITY_ICONS = {
+    warrior: ['🛡️', '📯', '👊'], mage: ['🔥', '❄️', '☄️'], rogue: ['💨', '🗡️', '☠️'],
+    paladin: ['✨', '🙏', '⚖️'], necromancer: ['💀', '🩸', '⚰️'], ranger: ['🎯', '🪤', '🌧️']
+};
 const ALL_CLASSES = ['warrior', 'mage', 'rogue', 'paladin', 'necromancer', 'ranger'];
 const RARITY_COLORS_CB = { common: '#94a3b8', rare: '#38bdf8', epic: '#f472b6', legendary: '#fb923c' };
 
@@ -1793,6 +1849,30 @@ const MERCHANT_BARKS = [
     'Gold spends the same whether it was earned or pried from a corpse.',
     "Everything's genuine. Mostly.",
     "I don't ask where the Descent's gold comes from. Neither should you."
+];
+const UNIQUE_ITEMS_DB = [
+    { id: 'voidfang', name: 'Voidfang', type: 'weapon', icon: '🗡️', statBonus: 10, uniqueEffect: 'lifesteal', lore: 'It does not cut. It drinks.' },
+    { id: 'aegis_eternal', name: 'Aegis Eternal', type: 'shield', icon: '🛡️', statBonus: 8, uniqueEffect: 'thorns', lore: 'Forged by the first ward-smith. It remembers every blow it has ever stopped.' },
+    { id: 'cinderheart', name: 'Cinderheart', type: 'weapon', icon: '🔥', statBonus: 9, uniqueEffect: 'burn_on_hit', lore: "A splinter of the Forge's original flame, still burning after a thousand years." },
+    { id: 'wanderers_cloak', name: "Wanderer's Cloak", type: 'armor', icon: '🧥', statBonus: 7, uniqueEffect: 'vision', lore: 'Worn by a scout who mapped three depths of the Descent and lived to tell it.' },
+    { id: 'soulbound_ring', name: 'Soulbound Ring', type: 'accessory', icon: '💍', statBonus: 6, uniqueEffect: 'soul_heal', lore: 'It was a wedding band once. Now it only remembers how to hold on.' }
+];
+const TRIALS_DB = [
+    { id: 'trial_steel', name: 'Trial of Steel', cls: 'warrior', biome: 'catacombs', level: 5, mutators: [], title: 'The Unbroken', seed: 0x51ee1001 },
+    { id: 'trial_flame', name: 'Trial of Flame', cls: 'mage', biome: 'forges', level: 12, mutators: ['glass'], title: 'Ashwalker', seed: 0xf1a3e002 },
+    { id: 'trial_shadow', name: 'Trial of Shadow', cls: 'rogue', biome: 'void', level: 20, mutators: ['nightmare'], title: 'Nightborn', seed: 0x5ad0c003 }
+];
+const BOUNTY_POOL = [
+    { id: 'no_potion', name: 'Abstinence', desc: "Don't drink a potion this floor.", icon: '🚫' },
+    { id: 'speed', name: 'Swift Descent', desc: 'Reach the stairs within 40 turns.', icon: '⏱️' },
+    { id: 'slayer', name: 'Bloodwork', desc: 'Defeat 3 enemies on this floor.', icon: '⚔️' }
+];
+const MUTATOR_POOL = [
+    { id: 'iron_will', name: 'Iron Will', icon: '🧊', desc: 'No potions may be used.' },
+    { id: 'swarm', name: 'Swarm', icon: '🐝', desc: '+2 enemies spawn per room.' },
+    { id: 'glass', name: 'Glass Cannon Run', icon: '🏺', desc: '+30% damage dealt and taken.' },
+    { id: 'nightmare', name: 'Nightmare', icon: '🌑', desc: 'Every floor is shrouded in Darkness.' },
+    { id: 'bloodlust', name: 'Bloodlust', icon: '🩸', desc: '-20% max HP, but 10% lifesteal on every hit.' }
 ];
 const RELIC_POOL = [
     { id: 'lucky_strikes', name: 'Loaded Dice', icon: '🎯', desc: 'Every 4th strike is a guaranteed critical hit.' },
@@ -1867,7 +1947,9 @@ const ACHIEVEMENTS_DB = [
     { id: 'boss_rush_champion', name: 'Boss Rush Champion', icon: '🏅', desc: 'Clear the Boss Rush gauntlet.' },
     { id: 'wave_survivor', name: 'Wave Survivor', icon: '🌊', desc: 'Reach Wave 10 in Endless Mode.' },
     { id: 'not_alone', name: 'Not Alone', icon: '🐾', desc: 'Fight alongside 2 companions at once.' },
-    { id: 'ascendant', name: 'Ascendant', icon: '🔥', desc: 'Reach Ascension Tier 3 in Boss Rush.' }
+    { id: 'ascendant', name: 'Ascendant', icon: '🔥', desc: 'Reach Ascension Tier 3 in Boss Rush.' },
+    { id: 'masochist', name: 'Masochist', icon: '🎲', desc: 'Start a run with 3 Challenge Mutators active.' },
+    { id: 'trial_master', name: 'Trial Master', icon: '🏵️', desc: 'Earn all three Archon Trial titles.' }
 ];
 
 // --- Seeded RNG helpers (daily challenge) ---
@@ -1949,8 +2031,11 @@ class DungeonEngine {
         this.allies = [];
         this.playerTraps = [];
         this.ambushTriggers = [];
+        this.hordeTriggers = []; this.hordeState = null; this.hordeBreatherTimer = 0;
+        this.activeBounty = null;
         this.secretWalls = [];
         this.unstableFloor = false; this.unstableTimer = 0;
+        this.trialMode = false; this.trialId = null; this.trialSeed = 0;
         this.meta = this.loadMeta();
         this.settings = this.loadSettings();
 
@@ -1964,6 +2049,7 @@ class DungeonEngine {
         this.pendingMode = null;
         this.bossRushMode = false; this.bossRushIndex = 0; this.bossRushOrder = ['catacombs', 'forges', 'void']; this.ascensionTier = 0;
         this.routeModifier = null;
+        this.stagedMutators = []; this.activeMutators = [];
         this.endlessMode = false; this.endlessWave = 0; this.endlessBreatherTimer = 0;
 
         this.initDOM();
@@ -1974,7 +2060,7 @@ class DungeonEngine {
 
     // --- Metaprogression (Archon Souls) ---
     loadMeta() {
-        const defaults = { souls: 0, vitality: 0, power: 0, fortune: 0, bestiary: {}, lore: [], runHistory: [], dailyBest: null, achievements: {}, stats: {} };
+        const defaults = { souls: 0, vitality: 0, power: 0, fortune: 0, bestiary: {}, lore: [], runHistory: [], dailyBest: null, achievements: {}, stats: {}, titles: [] };
         try {
             const raw = localStorage.getItem('archonDescent_meta');
             if (raw) return Object.assign(defaults, JSON.parse(raw));
@@ -1985,9 +2071,48 @@ class DungeonEngine {
         try { localStorage.setItem('archonDescent_meta', JSON.stringify(this.meta)); } catch (e) {}
     }
 
+    // --- JSON save export/import: lets progress travel between browsers/profiles ---
+    exportSaveData() {
+        const payload = { v: 1, exportedAt: Date.now(), meta: this.meta, settings: this.settings };
+        const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.download = `archons-descent-save-${todayKey()}.json`;
+        link.href = url;
+        link.click();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+        this.logMessage('Save data exported.', 'log-system');
+    }
+    importSaveData(file) {
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = () => {
+            let payload;
+            try { payload = JSON.parse(reader.result); } catch (e) {
+                this.logMessage('Import failed: not a valid save file.', 'log-combat-enemy');
+                return;
+            }
+            if (!payload || typeof payload.meta !== 'object') {
+                this.logMessage('Import failed: unrecognized save format.', 'log-combat-enemy');
+                return;
+            }
+            this.meta = Object.assign(this.loadMeta(), payload.meta);
+            this.saveMeta();
+            if (payload.settings && typeof payload.settings === 'object') {
+                this.settings = Object.assign(this.loadSettings(), payload.settings);
+                this.saveSettings();
+                this.applySettings();
+            }
+            this.updateHubUI();
+            this.updateDailyUI();
+            this.logMessage('Save data imported successfully.', 'log-loot');
+        };
+        reader.readAsText(file);
+    }
+
     // --- Settings (persisted separately from run/meta progression) ---
     loadSettings() {
-        const defaults = { sfx: 1, music: 0.4, shake: 1, colorblind: false };
+        const defaults = { sfx: 1, music: 0.4, shake: 1, colorblind: false, uiScale: 1 };
         try {
             const raw = localStorage.getItem('archonDescent_settings');
             if (raw) return Object.assign(defaults, JSON.parse(raw));
@@ -2001,10 +2126,12 @@ class DungeonEngine {
         sfx.volume = this.settings.sfx;
         music.setVolume(this.settings.music);
         document.body.classList.toggle('colorblind', !!this.settings.colorblind);
+        document.documentElement.style.setProperty('--ui-scale', this.settings.uiScale || 1);
         const sync = (id, v) => { const el = document.getElementById(id); if (el) el.value = v; };
         sync('set-sfx', Math.round(this.settings.sfx * 100));
         sync('set-music', Math.round(this.settings.music * 100));
         sync('set-shake', Math.round(this.settings.shake * 100));
+        sync('set-uiscale', Math.round((this.settings.uiScale || 1) * 100));
         const cb = document.getElementById('set-colorblind');
         if (cb) cb.checked = !!this.settings.colorblind;
     }
@@ -2030,7 +2157,54 @@ class DungeonEngine {
             container.appendChild(el);
         });
         document.getElementById('hub-souls-count').innerText = this.meta.souls;
+        this.updateHubVisualTier();
         document.getElementById('hub-overlay').classList.remove('hidden');
+    }
+
+    // The Hub's presentation grows as the player invests more Souls into it, so
+    // meta-progression is seen at a glance, not just read as a stack of numbers.
+    updateHubVisualTier() {
+        const totalRank = (this.meta.vitality || 0) + (this.meta.power || 0) + (this.meta.fortune || 0);
+        const tier = Math.min(3, Math.floor(totalRank / 8));
+        const overlay = document.getElementById('hub-overlay');
+        overlay.classList.remove('hub-tier-1', 'hub-tier-2', 'hub-tier-3');
+        if (tier > 0) overlay.classList.add(`hub-tier-${tier}`);
+        const banners = document.getElementById('hub-banners');
+        if (banners) banners.innerText = '🔥'.repeat(Math.min(6, Math.floor(totalRank / 4)));
+    }
+
+    // --- Bounty Board: an optional per-floor objective for bonus gold and XP ---
+    updateBountyBadge() {
+        const el = document.getElementById('bounty-badge');
+        if (!el) return;
+        if (!this.activeBounty) { el.innerText = ''; return; }
+        const b = this.activeBounty;
+        const def = BOUNTY_POOL.find(x => x.id === b.id);
+        if (!def) { el.innerText = ''; return; }
+        let progress = '';
+        if (b.id === 'slayer') progress = ` (${Math.min(b.kills, 3)}/3)`;
+        else if (b.id === 'speed') progress = ` (${b.turns}/40)`;
+        el.innerText = `${def.icon} ${def.name}${progress}`;
+        el.style.color = b.failed ? '#fb7185' : '#facc15';
+    }
+    resolveBounty() {
+        if (!this.activeBounty) return;
+        const b = this.activeBounty;
+        const def = BOUNTY_POOL.find(x => x.id === b.id);
+        let success = !b.failed;
+        if (success && b.id === 'slayer' && b.kills < 3) success = false;
+        if (success && b.id === 'speed' && b.turns > 40) success = false;
+        if (success && def) {
+            const gold = 40 + this.level * 6;
+            const xp = 15 + this.level * 3;
+            this.dropGoldAt(this.player.x, this.player.y, gold);
+            this.player.xp += xp;
+            this.logMessage(`Bounty complete: ${def.name}! +${gold} gold, +${xp} XP.`, 'log-loot');
+            this.checkLevelUp();
+        } else if (def) {
+            this.logMessage(`Bounty failed: ${def.name}.`, 'log-system');
+        }
+        this.activeBounty = null;
     }
     buyUpgrade(u, cost) {
         if (this.meta.souls >= cost) {
@@ -2090,12 +2264,21 @@ class DungeonEngine {
         document.getElementById('death-overlay').classList.add('hidden');
         document.getElementById('pause-overlay').classList.add('hidden');
         document.getElementById('bossrush-victory-overlay').classList.add('hidden');
+        document.getElementById('trial-victory-overlay').classList.add('hidden');
         this.paused = false;
         this.pendingMode = null;
         music.stop();
         this.updateHubUI();
         this.updateDailyUI();
         this.updateModeSelectUI();
+        document.getElementById('resume-run-btn').classList.toggle('hidden', !this.hasAutosave());
+        this.stagedMutators = [];
+        this.updateMutatorBadge();
+        const trialsBadge = document.getElementById('trials-count-badge');
+        if (trialsBadge) {
+            const earned = (this.meta.titles || []).length;
+            trialsBadge.innerText = earned > 0 ? ` (${earned}/${TRIALS_DB.length})` : '';
+        }
     }
 
     updateModeSelectUI() {
@@ -2110,6 +2293,35 @@ class DungeonEngine {
         if (this.pendingMode === 'bossrush') sub.innerText = 'Select Archetype — BOSS RUSH';
         else if (this.pendingMode === 'endless') sub.innerText = 'Select Archetype — ENDLESS MODE';
         else sub.innerText = 'Select Your Archetype';
+    }
+
+    // --- Challenge Mutators: optional run modifiers picked before a standard descent ---
+    updateMutatorBadge() {
+        const badge = document.getElementById('mutators-count-badge');
+        if (badge) badge.innerText = this.stagedMutators.length > 0 ? ` (${this.stagedMutators.length})` : '';
+    }
+    openMutatorSelect() {
+        this.openMenuScreen('mutator-select-overlay', 'start');
+    }
+    renderMutatorList() {
+        const list = document.getElementById('mutator-list');
+        list.innerHTML = '';
+        MUTATOR_POOL.forEach(m => {
+            const active = this.stagedMutators.includes(m.id);
+            const el = document.createElement('div');
+            el.className = 'bestiary-entry';
+            el.style.cursor = 'pointer';
+            el.style.borderColor = active ? 'var(--rarity-epic)' : '';
+            el.style.background = active ? 'rgba(168, 85, 247, 0.15)' : '';
+            el.innerHTML = `<span class="be-icon">${active ? '✅' : m.icon}</span><div><div class="be-name">${m.name}</div><div class="be-lore">${m.desc}</div></div>`;
+            el.onclick = () => { this.toggleMutator(m.id); this.renderMutatorList(); this.updateMutatorBadge(); };
+            list.appendChild(el);
+        });
+    }
+    toggleMutator(id) {
+        const idx = this.stagedMutators.indexOf(id);
+        if (idx === -1) this.stagedMutators.push(id);
+        else this.stagedMutators.splice(idx, 1);
     }
 
     updateDailyUI() {
@@ -2146,8 +2358,11 @@ class DungeonEngine {
         this.allies = [];
         this.playerTraps = [];
         this.ambushTriggers = [];
+        this.hordeTriggers = []; this.hordeState = null; this.hordeBreatherTimer = 0;
+        this.activeBounty = null;
         this.secretWalls = [];
         this.unstableFloor = false; this.unstableTimer = 0;
+        this.activeMutators = [];
         this.phoenixUsed = false; this.luckyCounter = 0; this.momentumReady = false;
         this.runStats = { activeMs: 0, kills: 0 };
         this.lastTimerSecs = -1;
@@ -2241,20 +2456,44 @@ class DungeonEngine {
     }
 
     startGame(playerClass, daily = false) {
+        this.clearAutosave();
         this.dailyMode = daily;
         this.bossRushMode = false;
         this.endlessMode = false;
+        this.trialMode = false; this.trialId = null;
         if (!daily) { this.dailySeed = 0; this.dailyKey = null; }
+        // Mutators are excluded from Daily Challenge runs so the leaderboard stays comparable
+        const mutatorsToApply = daily ? [] : this.stagedMutators.slice();
+        this.stagedMutators = [];
         this.level = 1;
         this.initNewPlayer(playerClass);
+        if (mutatorsToApply.length > 0) {
+            this.activeMutators = mutatorsToApply;
+            this.applyMutatorEffects();
+            this.checkAchievements();
+        }
         this.launchRun();
         if (daily) this.logMessage(`DAILY CHALLENGE ${this.dailyKey}: fixed dungeon, fixed class. Descend!`, 'log-level');
+        else if (this.activeMutators.length > 0) {
+            const names = this.activeMutators.map(id => (MUTATOR_POOL.find(m => m.id === id) || {}).name).join(', ');
+            this.logMessage(`Mutators active: ${names}`, 'log-level');
+        }
+    }
+
+    applyMutatorEffects() {
+        if (this.activeMutators.includes('bloodlust')) {
+            const loss = Math.ceil(this.player.maxHp * 0.2);
+            this.player.maxHp = Math.max(10, this.player.maxHp - loss);
+            this.player.hp = this.player.maxHp;
+        }
     }
 
     startBossRush(playerClass) {
+        this.clearAutosave();
         this.dailyMode = false; this.dailySeed = 0; this.dailyKey = null;
         this.bossRushMode = true;
         this.endlessMode = false;
+        this.trialMode = false; this.trialId = null;
         this.bossRushIndex = 0;
         this.ascensionTier = 0;
         this.level = 10;
@@ -2264,15 +2503,72 @@ class DungeonEngine {
     }
 
     startEndless(playerClass) {
+        this.clearAutosave();
         this.dailyMode = false; this.dailySeed = 0; this.dailyKey = null;
         this.bossRushMode = false;
         this.endlessMode = true;
+        this.trialMode = false; this.trialId = null;
         this.endlessWave = 0;
         this.endlessBreatherTimer = 0;
         this.level = 5;
         this.initNewPlayer(playerClass);
         this.launchRun();
         this.logMessage('ENDLESS MODE: survive as many waves as you can. There is no exit but death.', 'log-level');
+    }
+
+    // --- Archon Trials: short, hand-tuned, seed-fixed gauntlets. Cosmetic titles only, no Souls. ---
+    openTrialsSelect() {
+        this.openMenuScreen('trials-select-overlay', 'start');
+    }
+    renderTrialsList() {
+        const list = document.getElementById('trials-list');
+        list.innerHTML = '';
+        const titles = this.meta.titles || [];
+        TRIALS_DB.forEach(t => {
+            const earned = titles.includes(t.title);
+            const el = document.createElement('div');
+            el.className = 'bestiary-entry';
+            el.style.cursor = 'pointer';
+            const mutNames = t.mutators.map(id => (MUTATOR_POOL.find(m => m.id === id) || {}).name).join(', ');
+            el.innerHTML = `<span class="be-icon">${earned ? '🏵️' : '⚔️'}</span><div><div class="be-name">${t.name}${earned ? '<span class="be-kills">Earned</span>' : ''}</div><div class="be-lore">${t.cls.toUpperCase()} · ${t.biome} · Reward: "${t.title}"${mutNames ? ` · ${mutNames}` : ''}</div></div>`;
+            el.onclick = () => this.startTrial(t.id);
+            list.appendChild(el);
+        });
+    }
+    startTrial(trialId) {
+        const trial = TRIALS_DB.find(t => t.id === trialId);
+        if (!trial) return;
+        this.clearAutosave();
+        document.getElementById('trials-select-overlay').classList.add('hidden');
+        this.dailyMode = false; this.dailySeed = 0; this.dailyKey = null;
+        this.bossRushMode = false; this.endlessMode = false;
+        this.trialMode = true; this.trialId = trialId; this.trialSeed = trial.seed;
+        this.level = trial.level;
+        this.initNewPlayer(trial.cls);
+        this.activeMutators = trial.mutators.slice();
+        this.applyMutatorEffects();
+        this.launchRun();
+        this.logMessage(`${trial.name}: a fixed gauntlet. Reach the stairs to claim "${trial.title}".`, 'log-level');
+    }
+    finishTrial() {
+        const trial = TRIALS_DB.find(t => t.id === this.trialId);
+        this.gameOverHandled = true;
+        this.clearAutosave();
+        music.stop();
+        sfx.playVictory();
+        if (!this.meta.titles) this.meta.titles = [];
+        let newTitle = false;
+        if (trial && !this.meta.titles.includes(trial.title)) {
+            this.meta.titles.push(trial.title);
+            this.saveMeta();
+            newTitle = true;
+        }
+        document.getElementById('trial-victory-subtitle').innerText = trial ? `${trial.name} cleared!` : 'Trial cleared!';
+        document.getElementById('trial-victory-title').innerText = trial
+            ? (newTitle ? `New Title Earned: "${trial.title}"` : `Title already held: "${trial.title}"`)
+            : '';
+        document.getElementById('trial-victory-overlay').classList.remove('hidden');
+        this.checkAchievements();
     }
 
     // Daily Challenge determinism: swap the global RNG for a per-floor seeded
@@ -2283,6 +2579,8 @@ class DungeonEngine {
         const origRandom = Math.random;
         if (this.dailyMode) {
             Math.random = mulberry32((this.dailySeed ^ Math.imul(this.level, 2654435761)) >>> 0);
+        } else if (this.trialMode) {
+            Math.random = mulberry32(this.trialSeed >>> 0);
         }
         try {
             this.generateLevelInner();
@@ -2296,6 +2594,8 @@ class DungeonEngine {
         this.shrines = []; this.destructibles = []; this.particles = []; this.telegraphs = [];
         this.captives = []; this.trapStates = {}; this.playerTraps = [];
         this.ambushTriggers = []; this.secretWalls = [];
+        this.hordeTriggers = []; this.hordeState = null; this.hordeBreatherTimer = 0;
+        this.activeBounty = null;
         // Rescued allies and raised skeletons are floor-scoped; a purchased pet follows across floors
         this.allies = (this.allies || []).filter(a => a.type === 'pet');
         this.player.path = [];
@@ -2326,6 +2626,12 @@ class DungeonEngine {
             this.textures.setBiome(biome);
             music.setBiome(biome);
             this.generateEndlessArena();
+        } else if (this.trialMode) {
+            const trial = TRIALS_DB.find(t => t.id === this.trialId);
+            const biome = (trial && trial.biome) || 'catacombs';
+            this.textures.setBiome(biome);
+            music.setBiome(biome);
+            this.generateDungeon();
         } else {
             // Set Biome
             if (this.level >= 9) this.textures.setBiome('void');
@@ -2338,7 +2644,8 @@ class DungeonEngine {
             const isCamp = !isBossFloor && (this.level % 4 === 0);
 
             // Darkness floors: occasional oppressive floors where light barely reaches
-            this.darknessFloor = !isBossFloor && !isCamp && this.level >= 3 && Math.random() < 0.15;
+            const nightmareMutator = this.activeMutators && this.activeMutators.includes('nightmare');
+            this.darknessFloor = !isBossFloor && !isCamp && (nightmareMutator || (this.level >= 3 && Math.random() < 0.15));
 
             // Unstable floors: hazard tiles periodically relocate. Mutually exclusive with darkness
             // so floor modifiers don't compound too harshly on the same level.
@@ -2357,7 +2664,14 @@ class DungeonEngine {
 
             // Lore scraps tucked into some hostile floors
             if (!isBossFloor && !isCamp && Math.random() < 0.30) this.spawnLoreScrap();
+
+            // Bounty board: an optional per-floor objective for bonus gold and XP
+            if (!isBossFloor && !isCamp && Math.random() < 0.4) {
+                const b = BOUNTY_POOL[Math.floor(Math.random() * BOUNTY_POOL.length)];
+                this.activeBounty = { id: b.id, turns: 0, kills: 0, failed: false };
+            }
         }
+        this.updateBountyBadge();
 
         // A persisted pet needs to be relocated next to the player on the new floor
         this.allies.forEach(a => {
@@ -2380,6 +2694,10 @@ class DungeonEngine {
             this.logMessage(`Guardian ${this.bossRushIndex + 1} of 3 awaits...`, 'log-combat-enemy');
         } else if (this.endlessMode) {
             this.dungeonLevel.innerText = `ENDLESS · WAVE ${this.endlessWave} - ${biomeName}`;
+        } else if (this.trialMode) {
+            const trial = TRIALS_DB.find(t => t.id === this.trialId);
+            this.dungeonLevel.innerText = `${trial ? trial.name.toUpperCase() : 'TRIAL'} - ${biomeName}`;
+            this.logMessage('Find the stairs to complete the trial.', 'log-system');
         } else {
             this.dungeonLevel.innerText = `DEPTH B${this.level.toString().padStart(2, '0')} - ${biomeName}`;
             this.logMessage(`Descended to B${this.level}.`, 'log-system');
@@ -2479,11 +2797,15 @@ class DungeonEngine {
                     // Ambush: enemies stay hidden until the player reaches the room's center
                     const eCount = Math.max(1, Math.floor(Math.random() * 3) + (this.level > 5 ? 1 : 0));
                     this.ambushTriggers.push({ x: r.cx, y: r.cy, rx: r.x, ry: r.y, rw: r.w, rh: r.h, count: eCount, spawned: false });
+                } else if (idx > 1 && this.level >= 4 && this.hordeTriggers.length === 0 && roomRoll < 0.08 + 0.15 + 0.08) {
+                    // Horde Room: a single-room wave-survival detour, distinct from Endless Mode's full arena
+                    this.hordeTriggers.push({ x: r.cx, y: r.cy, rx: r.x, ry: r.y, rw: r.w, rh: r.h, spawned: false });
                 } else {
                     // Enemies
                     let eCount = Math.floor(Math.random() * 3) + (this.level > 5 ? 1 : 0);
                     if (routeMod === 'vault') eCount += 1;
                     else if (routeMod === 'shrine') eCount = Math.max(0, eCount - 1);
+                    if (this.activeMutators && this.activeMutators.includes('swarm')) eCount += 2;
                     for(let i=0; i<eCount; i++) {
                         const ex = r.x + 1 + Math.floor(Math.random() * (r.w - 2));
                         const ey = r.y + 1 + Math.floor(Math.random() * (r.h - 2));
@@ -2990,6 +3312,50 @@ class DungeonEngine {
             sfx.playHurt();
             this.logMessage('Enemies ambush you!', 'log-combat-enemy');
         }
+    }
+
+    // Horde Room: a single-room, multi-wave survival detour (distinct from the full Endless arena)
+    startHorde(trigger) {
+        trigger.spawned = true;
+        this.hordeState = { room: trigger, wave: 0, maxWaves: 3, active: true };
+        this.logMessage('The chamber seals! Survive the onslaught!', 'log-combat-enemy');
+        this.triggerCameraShake(10, 200);
+        sfx.playHurt();
+        this.spawnHordeWave();
+    }
+
+    spawnHordeWave() {
+        const hs = this.hordeState;
+        if (!hs) return;
+        hs.wave++;
+        const room = hs.room;
+        const count = 2 + hs.wave;
+        for (let i = 0; i < count; i++) {
+            for (let tries = 0; tries < 20; tries++) {
+                const ex = room.rx + 1 + Math.floor(Math.random() * (room.rw - 2));
+                const ey = room.ry + 1 + Math.floor(Math.random() * (room.rh - 2));
+                if (this.map[ey] && this.map[ey][ex] === 1 && !this.enemies.some(e => e.x === ex && e.y === ey) && !(ex === this.player.x && ey === this.player.y)) {
+                    this.spawnEnemy(ex, ey);
+                    const spawned = this.enemies[this.enemies.length - 1];
+                    if (spawned) { spawned.aware = true; spawned.hordeTag = true; }
+                    break;
+                }
+            }
+        }
+        this.triggerCameraShake(6, 150);
+        this.logMessage(`Wave ${hs.wave}/${hs.maxWaves} incoming!`, 'log-combat-enemy');
+    }
+
+    finishHorde() {
+        const hs = this.hordeState;
+        if (!hs) return;
+        this.hordeState = null;
+        const room = hs.room;
+        this.spawnChest(room.x, room.y);
+        this.dropGoldAt(room.x, room.y, 40 + this.level * 8);
+        sfx.playLevelUp();
+        this.spawnLevelUpParticles();
+        this.logMessage('The onslaught ends. The chamber yields its reward.', 'log-loot');
     }
 
     // Scatters a couple of destructible wall tiles that look like ordinary walls until bumped
@@ -3553,6 +3919,10 @@ class DungeonEngine {
 
     usePotion(type) {
         if (!this.player || this.player.hp <= 0 || this.transition || this.paused || this.isMenuOverlayOpen()) return;
+        if (this.activeMutators && this.activeMutators.includes('iron_will')) {
+            this.logMessage('Iron Will forbids potions.', 'log-system');
+            return;
+        }
         const heal = 50 + (this.relics.includes('alchemist_stone') ? 25 : 0);
         if (type === 'hp') {
             if (this.player.potions.hp > 0) {
@@ -3565,6 +3935,7 @@ class DungeonEngine {
                 sfx.playLoot();
                 this.spawnDamageNumber(this.player.x, this.player.y, `+${heal}`, '#34d399');
                 this.logMessage(`Drank a Health Potion. Restored ${heal} HP.`, 'log-combat-player');
+                this.failPotionBounty();
                 this.updateStatsUI();
             } else {
                 this.logMessage(`No Health Potions remaining!`, 'log-combat-enemy');
@@ -3580,10 +3951,17 @@ class DungeonEngine {
                 sfx.playMagic();
                 this.spawnDamageNumber(this.player.x, this.player.y, `+${heal} MP`, '#3b82f6');
                 this.logMessage(`Drank a Mana Potion. Restored ${heal} MP.`, 'log-combat-player');
+                this.failPotionBounty();
                 this.updateStatsUI();
             } else {
                 this.logMessage(`No Mana Potions remaining!`, 'log-combat-enemy');
             }
+        }
+    }
+    failPotionBounty() {
+        if (this.activeBounty && this.activeBounty.id === 'no_potion' && !this.activeBounty.failed) {
+            this.activeBounty.failed = true;
+            this.updateBountyBadge();
         }
     }
 
@@ -3784,7 +4162,10 @@ class DungeonEngine {
             sfx.playVictory();
             if (this.bossRushMode) {
                 this.startLevelTransition(() => this.advanceBossRush());
+            } else if (this.trialMode) {
+                this.startLevelTransition(() => this.finishTrial());
             } else {
+                this.resolveBounty();
                 const nextLevel = this.level + 1;
                 const offerChoice = !this.dailyMode && nextLevel % 3 === 0 && nextLevel % 10 !== 0 && nextLevel % 4 !== 0;
                 if (offerChoice) {
@@ -3844,6 +4225,9 @@ class DungeonEngine {
         const ambush = this.ambushTriggers.find(t => !t.spawned && t.x === targetX && t.y === targetY);
         if (ambush) this.spawnAmbush(ambush);
 
+        const horde = this.hordeTriggers.find(t => !t.spawned && t.x === targetX && t.y === targetY);
+        if (horde) this.startHorde(horde);
+
         this.postTurnSystems();
         return true;
     }
@@ -3853,6 +4237,14 @@ class DungeonEngine {
         if (this.player.skillCooldown2 > 0) this.player.skillCooldown2--;
         if (this.player.ultimateCooldown > 0) this.player.ultimateCooldown--;
         if (this.player.battleCryTurns > 0) this.player.battleCryTurns--;
+
+        if (this.activeBounty) {
+            if (this.activeBounty.id === 'speed') {
+                this.activeBounty.turns++;
+                if (this.activeBounty.turns > 40) this.activeBounty.failed = true;
+            }
+            this.updateBountyBadge();
+        }
 
         // Toggle spike trap states
         Object.keys(this.trapStates).forEach(key => {
@@ -3904,6 +4296,95 @@ class DungeonEngine {
         music.setTarget(musicCombat ? 1 : 0);
 
         if (this.player.hp <= 0) this.handleGameOver();
+        this.saveAutosave();
+    }
+
+    // --- Mid-run autosave/resume: only for normal/daily descents, not the short arcade modes ---
+    serializeRun() {
+        return {
+            v: 1,
+            level: this.level, player: this.player, inventory: this.inventory, equipped: this.equipped,
+            talents: this.talents, relics: this.relics, allies: this.allies, playerTraps: this.playerTraps,
+            ambushTriggers: this.ambushTriggers, hordeTriggers: this.hordeTriggers, hordeState: this.hordeState,
+            secretWalls: this.secretWalls, map: this.map, fog: this.fog, tileVariants: this.tileVariants,
+            enemies: this.enemies, chests: this.chests, itemsOnGround: this.itemsOnGround, torches: this.torches,
+            shrines: this.shrines, destructibles: this.destructibles, captives: this.captives, trapStates: this.trapStates,
+            stairs: this.stairs, isBossArena: this.isBossArena, darknessFloor: this.darknessFloor,
+            unstableFloor: this.unstableFloor, unstableTimer: this.unstableTimer, routeModifier: this.routeModifier,
+            dailyMode: this.dailyMode, dailyKey: this.dailyKey, dailySeed: this.dailySeed,
+            activeMutators: this.activeMutators,
+            runStats: this.runStats, biome: this.textures.currentBiome, savedAt: Date.now()
+        };
+    }
+    saveAutosave() {
+        if (!this.player || this.player.hp <= 0 || this.bossRushMode || this.endlessMode || this.trialMode) return;
+        try { localStorage.setItem('archonDescent_autosave', JSON.stringify(this.serializeRun())); } catch (e) {}
+    }
+    clearAutosave() {
+        try { localStorage.removeItem('archonDescent_autosave'); } catch (e) {}
+    }
+    hasAutosave() {
+        try { return !!localStorage.getItem('archonDescent_autosave'); } catch (e) { return false; }
+    }
+    resumeRun() {
+        let raw;
+        try { raw = localStorage.getItem('archonDescent_autosave'); } catch (e) { raw = null; }
+        if (!raw) return;
+        let data;
+        try { data = JSON.parse(raw); } catch (e) { this.clearAutosave(); return; }
+
+        document.getElementById('start-overlay').classList.add('hidden');
+        this.gameOverHandled = false;
+        this.pendingMode = null;
+
+        this.level = data.level; this.player = data.player; this.inventory = data.inventory; this.equipped = data.equipped;
+        this.talents = data.talents || []; this.relics = data.relics || []; this.allies = data.allies || [];
+        this.playerTraps = data.playerTraps || []; this.ambushTriggers = data.ambushTriggers || [];
+        this.hordeTriggers = data.hordeTriggers || []; this.hordeState = data.hordeState || null; this.hordeBreatherTimer = 0;
+        this.secretWalls = data.secretWalls || [];
+        this.map = data.map; this.fog = data.fog; this.tileVariants = data.tileVariants;
+        this.enemies = data.enemies || []; this.chests = data.chests || []; this.itemsOnGround = data.itemsOnGround || [];
+        this.torches = data.torches || []; this.shrines = data.shrines || []; this.destructibles = data.destructibles || [];
+        this.captives = data.captives || []; this.trapStates = data.trapStates || {};
+        this.stairs = data.stairs; this.isBossArena = data.isBossArena; this.isEndlessArena = false;
+        this.darknessFloor = data.darknessFloor; this.unstableFloor = data.unstableFloor; this.unstableTimer = data.unstableTimer || 0;
+        this.routeModifier = data.routeModifier || null;
+        this.activeMutators = data.activeMutators || [];
+        this.dailyMode = data.dailyMode; this.dailyKey = data.dailyKey; this.dailySeed = data.dailySeed;
+        this.bossRushMode = false; this.endlessMode = false; this.ascensionTier = 0; this.endlessWave = 0;
+        this.runStats = data.runStats || { activeMs: 0, kills: 0 };
+        this.lastTimerSecs = -1;
+        this.phoenixUsed = false; this.luckyCounter = 0; this.momentumReady = false;
+
+        this.textures.setBiome(data.biome || 'catacombs');
+        this.charClassTitle.innerText = this.player.classType.toUpperCase();
+        const icons = ABILITY_ICONS[this.player.classType];
+        if (icons) {
+            document.getElementById('ability-1').querySelector('.icon').innerText = icons[0];
+            document.getElementById('ability-2').querySelector('.icon').innerText = icons[1];
+            document.getElementById('ability-ult').querySelector('.icon').innerText = icons[2];
+        }
+
+        this.particles = [];
+        this.ambientMotes = [];
+        for (let i = 0; i < 50; i++) {
+            this.ambientMotes.push({ x: Math.random() * this.mapWidth * this.tileSize, y: Math.random() * this.mapHeight * this.tileSize, vx: (Math.random() - 0.5) * 0.15, vy: (Math.random() - 0.5) * 0.15, phase: Math.random() * Math.PI * 2, size: Math.random() * 2 + 1 });
+        }
+        this.camX = null; this.camY = null;
+
+        this.updateFOV();
+        this.updateStatsUI();
+        this.updateInventoryUI();
+        this.drawMinimap();
+        let biomeName = this.textures.currentBiome.toUpperCase();
+        if (this.darknessFloor) biomeName += ' · DARK';
+        if (this.unstableFloor) biomeName += ' · UNSTABLE';
+        this.dungeonLevel.innerText = `DEPTH B${this.level.toString().padStart(2, '0')} - ${biomeName}`;
+
+        sfx.playVictory();
+        music.start(); music.setBiome(this.textures.currentBiome); music.setTarget(0);
+        this.logMessage('Resumed your expedition.', 'log-system');
+        if (!this.loopStarted) { this.loopStarted = true; this.gameLoop(); }
     }
 
     getIncomingDamageMultiplier() { return this.player.hasteTurns > 0 ? 1.5 : 1; }
@@ -3911,6 +4392,7 @@ class DungeonEngine {
     getFovRadius() {
         let r = this.player.baseFov + (this.player.fovAccessory || 0);
         if (this.relics.includes('hunters_instinct')) r += 2;
+        if (this.equipped.armor && this.equipped.armor.uniqueEffect === 'vision') r += 2;
         if (this.darknessFloor) r -= 2;
         return Math.max(3, r);
     }
@@ -3920,6 +4402,7 @@ class DungeonEngine {
     damagePlayer(rawDmg) {
         let dmg = rawDmg * this.getIncomingDamageMultiplier();
         if (this.relics.includes('glass_cannon')) dmg *= 1.15;
+        if (this.activeMutators && this.activeMutators.includes('glass')) dmg *= 1.3;
         if (this.relics.includes('stoneheart')) dmg -= 2;
         dmg = Math.max(1, Math.ceil(dmg));
         this.player.hp -= dmg;
@@ -4014,6 +4497,20 @@ class DungeonEngine {
             const heal = Math.floor(dmg * 0.15);
             if (heal > 0) { this.player.hp = Math.min(this.player.maxHp, this.player.hp + heal); this.spawnDamageNumber(this.player.x, this.player.y, `+${heal}`, '#34d399'); }
         }
+        // Bloodlust mutator: lifesteal on every hit
+        if (this.activeMutators && this.activeMutators.includes('bloodlust')) {
+            const heal = Math.floor(dmg * 0.1);
+            if (heal > 0) { this.player.hp = Math.min(this.player.maxHp, this.player.hp + heal); this.spawnDamageNumber(this.player.x, this.player.y, `+${heal}`, '#fb7185'); }
+        }
+        // Voidfang: drinks 15% of dealt damage as healing
+        if (this.equipped.weapon && this.equipped.weapon.uniqueEffect === 'lifesteal') {
+            const heal = Math.floor(dmg * 0.15);
+            if (heal > 0) { this.player.hp = Math.min(this.player.maxHp, this.player.hp + heal); this.spawnDamageNumber(this.player.x, this.player.y, `+${heal}`, '#a855f7'); }
+        }
+        // Cinderheart: every strike sets the target alight
+        if (this.equipped.weapon && this.equipped.weapon.uniqueEffect === 'burn_on_hit' && enemy.hp > 0) {
+            this.applyStatus(enemy, 'burn', 3);
+        }
         // Executioner talent: critical hits heal you for a portion of the damage dealt
         if (isCrit && this.talents.includes('executioner')) {
             const heal = Math.floor(dmg * 0.25);
@@ -4074,6 +4571,11 @@ class DungeonEngine {
                     this.player.hp = Math.min(this.player.maxHp, this.player.hp + heal);
                     this.spawnDamageNumber(this.player.x, this.player.y, `+${heal}`, '#34d399');
                 }
+                if (this.equipped.accessory && this.equipped.accessory.uniqueEffect === 'soul_heal') {
+                    const heal = Math.ceil(this.player.maxHp * 0.05);
+                    this.player.hp = Math.min(this.player.maxHp, this.player.hp + heal);
+                    this.spawnDamageNumber(this.player.x, this.player.y, `+${heal}`, '#a855f7');
+                }
                 if (this.relics.includes('momentum')) this.momentumReady = true;
 
                 // Exploder trigger
@@ -4119,6 +4621,10 @@ class DungeonEngine {
         if (this.runStats) this.runStats.kills++;
         this.bumpStat('totalKills', 1);
         if (enemy.codexKey === 'mimic') this.bumpStat('mimicKills', 1);
+        if (this.activeBounty && this.activeBounty.id === 'slayer') {
+            this.activeBounty.kills++;
+            this.updateBountyBadge();
+        }
         if (!enemy.codexKey) return;
         if (!this.meta.bestiary) this.meta.bestiary = {};
         const first = !this.meta.bestiary[enemy.codexKey];
@@ -4219,6 +4725,8 @@ class DungeonEngine {
         if ((s.bestWave || 0) >= 10) this.unlockAchievement('wave_survivor');
         if (this.allies && this.allies.length >= 2) this.unlockAchievement('not_alone');
         if ((s.maxAscension || 0) >= 3) this.unlockAchievement('ascendant');
+        if (this.activeMutators && this.activeMutators.length >= 3) this.unlockAchievement('masochist');
+        if ((this.meta.titles || []).length >= TRIALS_DB.length) this.unlockAchievement('trial_master');
     }
 
     explodeBarrel(x, y) {
@@ -4392,7 +4900,7 @@ class DungeonEngine {
 
         if (dist <= 1.5) {
             const dmg = this.damagePlayer(Math.max(1, enemy.atk - this.getPlayerDefense()));
-            if (this.talents.includes('thorns')) {
+            if (this.talents.includes('thorns') || (this.equipped.shield && this.equipped.shield.uniqueEffect === 'thorns')) {
                 let ret = this.applyDamageToEnemy(enemy, Math.floor(dmg * 0.25));
                 enemy.hp -= ret; this.spawnDamageNumber(enemy.x, enemy.y, `-${ret}`, '#facc15');
                 this.triggerHitFlash(enemy); this.resetGhostDelay(enemy);
@@ -4736,6 +5244,10 @@ class DungeonEngine {
                 sfx.playLoot();
                 this.itemsOnGround.splice(lootIdx, 1);
                 this.logMessage(`Picked up: ${item.name}`, 'log-loot');
+                if (item.uniqueId) {
+                    this.spawnLevelUpParticles();
+                    this.showLoreToast(`${item.icon} ${item.name} — "${item.lore}"`);
+                }
             }
         }
     }
@@ -4806,6 +5318,7 @@ class DungeonEngine {
     handleGameOver() {
         if (this.gameOverHandled) return;
         this.gameOverHandled = true;
+        this.clearAutosave();
         music.stop();
         if (this.paused) {
             this.paused = false;
@@ -4815,7 +5328,9 @@ class DungeonEngine {
 
         const isEndless = this.endlessMode;
         const scoreDepth = isEndless ? this.endlessWave : this.level;
-        const soulsEarned = Math.floor(scoreDepth * 3 + (this.player.lvl || 1) * 2 + (this.player.gold || 0) * 0.05);
+        const mutatorBonus = 1 + (this.activeMutators ? this.activeMutators.length * 0.15 : 0);
+        // Archon Trials are cosmetic-only and never touch the Souls economy
+        const soulsEarned = this.trialMode ? 0 : Math.floor((scoreDepth * 3 + (this.player.lvl || 1) * 2 + (this.player.gold || 0) * 0.05) * mutatorBonus);
         this.meta.souls += soulsEarned;
         if (!this.meta.stats) this.meta.stats = {};
         this.meta.stats.totalSoulsEarned = (this.meta.stats.totalSoulsEarned || 0) + soulsEarned;
@@ -4824,7 +5339,7 @@ class DungeonEngine {
         // Record the expedition in the persistent run history
         const runMs = this.runStats ? this.runStats.activeMs : 0;
         const kills = this.runStats ? this.runStats.kills : 0;
-        const mode = isEndless ? 'endless' : (this.bossRushMode ? 'bossrush' : (this.dailyMode ? 'daily' : 'normal'));
+        const mode = this.trialMode ? 'trial' : (isEndless ? 'endless' : (this.bossRushMode ? 'bossrush' : (this.dailyMode ? 'daily' : 'normal')));
         if (!this.meta.runHistory) this.meta.runHistory = [];
         this.meta.runHistory.unshift({ d: Date.now(), cls: this.player.classType, depth: scoreDepth, lvl: this.player.lvl, kills, ms: runMs, daily: !!this.dailyMode, mode });
         if (this.meta.runHistory.length > 30) this.meta.runHistory.length = 30;
@@ -4860,6 +5375,68 @@ class DungeonEngine {
         return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
     }
 
+    // Renders a shareable run summary to an off-screen canvas and downloads it as a PNG
+    exportBuildCard() {
+        if (!this.player) return;
+        const c = document.createElement('canvas');
+        c.width = 800; c.height = 450;
+        const ctx = c.getContext('2d');
+
+        const grad = ctx.createLinearGradient(0, 0, 0, 450);
+        grad.addColorStop(0, '#131a2c'); grad.addColorStop(1, '#090d16');
+        ctx.fillStyle = grad; ctx.fillRect(0, 0, 800, 450);
+        const classColor = PLAYER_COLORS[this.player.classType] || '#38bdf8';
+        ctx.strokeStyle = classColor; ctx.lineWidth = 4; ctx.strokeRect(10, 10, 780, 430);
+
+        ctx.fillStyle = '#f8fafc'; ctx.font = '800 32px Arial, sans-serif';
+        ctx.fillText("ARCHON'S DESCENT", 40, 58);
+
+        ctx.fillStyle = classColor; ctx.font = '800 24px Arial, sans-serif';
+        ctx.fillText(`${this.player.classType.toUpperCase()} — Level ${this.player.lvl}`, 40, 98);
+
+        ctx.fillStyle = '#cbd5e1'; ctx.font = '17px Arial, sans-serif';
+        let y = 138;
+        const depthLine = this.endlessMode ? `Wave Reached: ${this.endlessWave}`
+            : this.bossRushMode ? `Boss Rush${this.ascensionTier > 0 ? ` (Ascension ${this.ascensionTier})` : ''}`
+            : `Depth Reached: B${String(this.level).padStart(2, '0')}`;
+        [depthLine,
+         `Time: ${this.formatTime(this.runStats ? this.runStats.activeMs : 0)}`,
+         `Kills: ${this.runStats ? this.runStats.kills : 0}`,
+         `Gold: ${this.player.gold}`
+        ].forEach(line => { ctx.fillText(line, 40, y); y += 26; });
+
+        y += 14;
+        ctx.fillStyle = '#eab308'; ctx.font = '800 17px Arial, sans-serif';
+        ctx.fillText('EQUIPPED GEAR', 40, y); y += 24;
+        ctx.fillStyle = '#cbd5e1'; ctx.font = '15px Arial, sans-serif';
+        ['weapon', 'armor', 'shield', 'accessory'].forEach(slot => {
+            const it = this.equipped[slot];
+            ctx.fillText(`${slot}: ${it ? `${it.name} (${it.rarity})` : '—'}`, 40, y);
+            y += 21;
+        });
+
+        ctx.fillStyle = '#a855f7'; ctx.font = '800 17px Arial, sans-serif';
+        ctx.fillText(`RELICS (${this.relics.length})`, 430, 138);
+        ctx.fillStyle = '#cbd5e1'; ctx.font = '15px Arial, sans-serif';
+        let ry = 164;
+        if (this.relics.length === 0) {
+            ctx.fillText('None found this run.', 430, ry);
+        } else {
+            this.relics.slice(0, 11).forEach(id => {
+                const r = RELIC_POOL.find(x => x.id === id);
+                if (r) { ctx.fillText(`${r.icon} ${r.name}`, 430, ry); ry += 21; }
+            });
+        }
+
+        ctx.fillStyle = '#64748b'; ctx.font = '13px Arial, sans-serif';
+        ctx.fillText(new Date().toLocaleDateString(), 40, 425);
+
+        const link = document.createElement('a');
+        link.download = `archons-descent-${this.player.classType}-${Date.now()}.png`;
+        link.href = c.toDataURL('image/png');
+        link.click();
+    }
+
     generateProceduralItem(forcedRarity = null) {
         const rarities = [ { id: 'common', w: 0.60 }, { id: 'rare', w: 0.25 }, { id: 'epic', w: 0.12 }, { id: 'legendary', w: 0.03 } ];
         let pool = rarities;
@@ -4868,6 +5445,17 @@ class DungeonEngine {
         const totalW = pool.reduce((s, r) => s + r.w, 0);
         let rRoll = Math.random() * totalW; let rarity = pool[0]; let accWeight = 0;
         for (const r of pool) { accWeight += r.w; if (rRoll <= accWeight) { rarity = r; break; } }
+
+        // Rarely, a legendary roll produces a hand-authored unique instead of a procedural item
+        if (rarity.id === 'legendary' && Math.random() < 0.2) {
+            const owned = new Set([...this.inventory, ...Object.values(this.equipped)].filter(Boolean).map(it => it.uniqueId).filter(Boolean));
+            const available = UNIQUE_ITEMS_DB.filter(u => !owned.has(u.id));
+            if (available.length > 0) {
+                const u = available[Math.floor(Math.random() * available.length)];
+                const bonus = u.statBonus + Math.floor(this.level * 0.5);
+                return { id: `unique_${u.id}_${Date.now()}`, uniqueId: u.id, name: u.name, type: u.type, rarity: 'legendary', statBonus: bonus, icon: u.icon, uniqueEffect: u.uniqueEffect, lore: u.lore };
+            }
+        }
 
         const types = ['weapon', 'armor', 'shield', 'accessory'];
         const type = types[Math.floor(Math.random() * types.length)];
@@ -4918,8 +5506,9 @@ class DungeonEngine {
     getPlayerAttack() {
         let w = this.equipped.weapon ? this.equipped.weapon.statBonus : 0;
         let buff = this.player.battleCryTurns > 0 ? 4 : 0;
-        const glass = (this.relics && this.relics.includes('glass_cannon')) ? 1.3 : 1;
-        return Math.round((this.player.baseAtk + w + buff) * glass);
+        let mult = (this.relics && this.relics.includes('glass_cannon')) ? 1.3 : 1;
+        if (this.activeMutators && this.activeMutators.includes('glass')) mult *= 1.3;
+        return Math.round((this.player.baseAtk + w + buff) * mult);
     }
 
     getPlayerDefense() {
@@ -5123,6 +5712,46 @@ class DungeonEngine {
         music.duck(this.paused);
     }
 
+    // Basic gamepad support: D-pad/left-stick to move, face buttons for abilities/potions, Start to pause.
+    // Polled once per animation frame rather than via the gamepadconnected event, since browsers only
+    // report live button/axis state inside a polling loop.
+    pollGamepad(now) {
+        const pads = navigator.getGamepads ? navigator.getGamepads() : [];
+        const gp = pads && pads[0];
+        if (!gp) return;
+
+        const pressed = i => !!(gp.buttons[i] && gp.buttons[i].pressed);
+        if (!this._gpPrevButtons) this._gpPrevButtons = [];
+        const justPressed = i => pressed(i) && !this._gpPrevButtons[i];
+
+        if (justPressed(9)) this.togglePause(); // Start/Options
+
+        const talentDraftOpen = document.getElementById('talent-overlay').classList.contains('hidden') === false;
+        const blocked = this.paused || this.isMenuOverlayOpen() || this.transition || talentDraftOpen;
+
+        if (!blocked) {
+            let dx = 0, dy = 0;
+            if (pressed(14)) dx = -1; else if (pressed(15)) dx = 1;
+            else if (gp.axes[0] < -0.5) dx = -1; else if (gp.axes[0] > 0.5) dx = 1;
+            if (pressed(12)) dy = -1; else if (pressed(13)) dy = 1;
+            else if (gp.axes[1] < -0.5) dy = -1; else if (gp.axes[1] > 0.5) dy = 1;
+
+            if (!this._gpLastMove) this._gpLastMove = 0;
+            if ((dx !== 0 || dy !== 0) && now - this._gpLastMove > 160) {
+                this._gpLastMove = now;
+                this.executeTurn(dx, dy);
+            }
+
+            if (justPressed(0)) this.useSkill();       // A
+            if (justPressed(1)) this.usePotion('hp');  // B
+            if (justPressed(2)) this.usePotion('mp');  // X
+            if (justPressed(3)) this.useSkill2();      // Y
+            if (justPressed(5)) this.useUltimate();    // Right bumper
+        }
+
+        this._gpPrevButtons = gp.buttons.map(b => b.pressed);
+    }
+
     openMenuScreen(id, from) {
         this.menuReturn = from;
         if (from === 'start') document.getElementById('start-overlay').classList.add('hidden');
@@ -5130,6 +5759,8 @@ class DungeonEngine {
         if (id === 'bestiary-overlay') this.renderBestiary();
         if (id === 'history-overlay') this.renderHistory();
         if (id === 'achievements-overlay') this.renderAchievements();
+        if (id === 'mutator-select-overlay') this.renderMutatorList();
+        if (id === 'trials-select-overlay') this.renderTrialsList();
         document.getElementById(id).classList.remove('hidden');
     }
 
@@ -5141,13 +5772,13 @@ class DungeonEngine {
 
     handleEscape() {
         const isOpen = id => !document.getElementById(id).classList.contains('hidden');
-        for (const id of ['settings-overlay', 'bestiary-overlay', 'history-overlay', 'achievements-overlay']) {
+        for (const id of ['settings-overlay', 'bestiary-overlay', 'history-overlay', 'achievements-overlay', 'mutator-select-overlay', 'trials-select-overlay']) {
             if (isOpen(id)) { this.closeMenuScreen(id); return; }
         }
         if (isOpen('shop-overlay')) { document.getElementById('shop-overlay').classList.add('hidden'); return; }
         if (isOpen('anvil-overlay')) { document.getElementById('anvil-overlay').classList.add('hidden'); return; }
         if (isOpen('hub-overlay')) { document.getElementById('hub-overlay').classList.add('hidden'); this.showClassScreen(); return; }
-        if (isOpen('start-overlay') || isOpen('death-overlay') || isOpen('talent-overlay') || isOpen('bossrush-victory-overlay') || isOpen('route-choice-overlay')) return;
+        if (isOpen('start-overlay') || isOpen('death-overlay') || isOpen('talent-overlay') || isOpen('bossrush-victory-overlay') || isOpen('route-choice-overlay') || isOpen('trial-victory-overlay')) return;
         this.togglePause();
     }
 
@@ -5215,6 +5846,7 @@ class DungeonEngine {
             let depthLabel, modeTag;
             if (r.mode === 'bossrush') { depthLabel = 'CLEAR'; modeTag = ' ⚔️'; }
             else if (r.mode === 'endless') { depthLabel = `W${r.depth}`; modeTag = ' 🌊'; }
+            else if (r.mode === 'trial') { depthLabel = 'TRIAL'; modeTag = ' 🏵️'; }
             else { depthLabel = `B${String(r.depth).padStart(2, '0')}`; modeTag = r.daily ? ' 📅' : ''; }
             el.innerHTML = `<span class="hr-depth">${depthLabel}</span><span class="hr-cls">${r.cls.toUpperCase()}${modeTag}</span><span class="hr-meta">Lv${r.lvl} · ${r.kills} kills · ${this.formatTime(r.ms)}</span><span class="hr-date">${new Date(r.d).toLocaleDateString()}</span>`;
             list.appendChild(el);
@@ -5313,6 +5945,11 @@ class DungeonEngine {
             this.pendingMode = this.pendingMode === 'endless' ? null : 'endless';
             this.updateModeSelectUI();
         });
+        document.getElementById('mutators-btn').addEventListener('click', () => this.openMutatorSelect());
+        document.getElementById('mutator-confirm-btn').addEventListener('click', () => this.closeMenuScreen('mutator-select-overlay'));
+        document.getElementById('trials-btn').addEventListener('click', () => this.openTrialsSelect());
+        document.getElementById('trials-back-btn').addEventListener('click', () => this.closeMenuScreen('trials-select-overlay'));
+        document.getElementById('trial-victory-btn').addEventListener('click', () => this.showClassScreen());
         document.getElementById('bossrush-victory-btn').addEventListener('click', () => this.showClassScreen());
         document.getElementById('bossrush-ascend-btn').addEventListener('click', () => this.ascendBossRush());
         document.querySelectorAll('.route-btn').forEach(btn => {
@@ -5337,12 +5974,15 @@ class DungeonEngine {
             document.getElementById('start-overlay').classList.add('hidden');
             this.openHub();
         });
+        document.getElementById('resume-run-btn').addEventListener('click', () => this.resumeRun());
         document.getElementById('hub-leave-btn').addEventListener('click', () => {
             document.getElementById('hub-overlay').classList.add('hidden');
             this.showClassScreen();
         });
 
         document.getElementById('restart-btn').addEventListener('click', () => this.showClassScreen());
+        document.getElementById('death-share-btn').addEventListener('click', () => this.exportBuildCard());
+        document.getElementById('bossrush-share-btn').addEventListener('click', () => this.exportBuildCard());
         const muteBtn = document.getElementById('mute-btn');
         muteBtn.addEventListener('click', () => { sfx.muted = !sfx.muted; muteBtn.innerHTML = sfx.muted ? '<span>🔇</span> Unmute SFX' : '<span>🔊</span> Mute SFX'; });
 
@@ -5382,9 +6022,18 @@ class DungeonEngine {
         document.getElementById('set-shake').addEventListener('input', e => {
             this.settings.shake = e.target.value / 100; this.saveSettings(); this.applySettings();
         });
+        document.getElementById('set-uiscale').addEventListener('input', e => {
+            this.settings.uiScale = e.target.value / 100; this.saveSettings(); this.applySettings();
+        });
         document.getElementById('set-colorblind').addEventListener('change', e => {
             this.settings.colorblind = e.target.checked; this.saveSettings(); this.applySettings();
             this.updateInventoryUI();
+        });
+        document.getElementById('export-save-btn').addEventListener('click', () => this.exportSaveData());
+        document.getElementById('import-save-btn').addEventListener('click', () => document.getElementById('import-save-input').click());
+        document.getElementById('import-save-input').addEventListener('change', e => {
+            if (e.target.files && e.target.files[0]) this.importSaveData(e.target.files[0]);
+            e.target.value = '';
         });
 
         const hudBtn = document.getElementById('hud-toggle-btn');
@@ -5529,6 +6178,7 @@ class DungeonEngine {
         this.lastFrameTime = now;
 
         music.update(dt);
+        if (this.player) this.pollGamepad(now);
 
         // Run timer (frozen while paused or after death)
         if (this.runStats && this.player && this.player.hp > 0 && !this.paused && !this.gameOverHandled) {
@@ -5600,6 +6250,22 @@ class DungeonEngine {
                 if (this.endlessBreatherTimer <= 0) {
                     this.endlessBreatherTimer = 0;
                     this.spawnNextEndlessWave();
+                }
+            }
+
+            // Horde Room: once a wave's tagged enemies are all gone, either start the next wave or pay out
+            if (this.hordeState && this.hordeState.active && this.player.hp > 0 && !this.enemies.some(e => e.hordeTag) && this.hordeBreatherTimer <= 0 && !this.transition) {
+                if (this.hordeState.wave >= this.hordeState.maxWaves) {
+                    this.finishHorde();
+                } else {
+                    this.hordeBreatherTimer = 1200;
+                }
+            }
+            if (this.hordeBreatherTimer > 0 && this.player.hp > 0) {
+                this.hordeBreatherTimer -= dt;
+                if (this.hordeBreatherTimer <= 0) {
+                    this.hordeBreatherTimer = 0;
+                    this.spawnHordeWave();
                 }
             }
 

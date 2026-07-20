@@ -26,7 +26,38 @@
       "Bash(node verify12.js)",
       "Bash(node verify13.js)",
       "Bash(node verify14.js)",
-      "Bash(lsof -ti:8795 -sTCP:LISTEN)"
+      "Bash(lsof -ti:8795 -sTCP:LISTEN)",
+      "Bash(python3 -c ' *)",
+      "Bash(cp \"/c/Users/Admin/AppData/Local/Temp/claude/c--Users-Admin-Dungeon-Crawler/cd3a9736-7232-4e4c-9860-4f3d59d96072/scratchpad/archons_descent_logo_256.png\" \"/c/Users/Admin/Dungeon Crawler/archons-descent-logo.png\" *)",
+      "Bash(node capture_screenshots.js)",
+      "Bash(git fetch *)",
+      "Bash(DEST=\"/c/Users/Admin/Dungeon Crawler/screenshots\" *)",
+      "Bash(node verify15.js)",
+      "Bash(node verify16.js)",
+      "Bash(lsof -ti:8796 -sTCP:LISTEN)",
+      "Bash(node qa_overflow_fix.js)",
+      "Bash(grep -viE \"overflow-y|safe center|has\\\\\\(\\\\.screen-overlay|visibility: hidden|pointer-events: none|game-header,|hud-toggle-btn|pause-btn|canvas-container.*z-index|padding: 16px 0|box-sizing|webkit-overflow-scrolling|touch-action: pan-y|^\\\\+\\\\+\\\\+|^\\\\+$\")",
+      "Bash(node verify17.js)",
+      "Bash(lsof -ti:8797 -sTCP:LISTEN)",
+      "Bash(node verify18.js)",
+      "Bash(node verify19.js)",
+      "Bash(node verify20.js)",
+      "Bash(find \"/c/Users/Admin/AppData/Local/Temp/claude/c--Users-Admin-Dungeon-Crawler/f23ebab1-0975-4a7e-8ebc-a190cb333bd9/scratchpad/pw-test\" -iname \"*.json\" -newer \"/c/Users/Admin/AppData/Local/Temp/claude/c--Users-Admin-Dungeon-Crawler/f23ebab1-0975-4a7e-8ebc-a190cb333bd9/scratchpad/pw-test/verify20.js\" 2>/dev/null; find / -iname \"archons-descent-save-*.json\" 2>/dev/null | head -5)",
+      "Read(//c//**)",
+      "Bash(node verify21.js)",
+      "Bash(node verify22.js)",
+      "Bash(node verify23.js)",
+      "Bash(sed -i \"s/8798/8799/\" verify23.js)",
+      "Bash(sed -i \"s/8799/8800/\" verify23.js)",
+      "Bash(node verify24.js)",
+      "Bash(curl -s http://localhost:8800/index.html)",
+      "Bash(node verify25.js)",
+      "Bash(node verify26.js)",
+      "Bash(taskkill //F //PID 22436)"
+    ],
+    "additionalDirectories": [
+      "C:\\Users\\Admin\\AppData\\Local\\Temp\\claude\\c--Users-Admin-Dungeon-Crawler\\cd3a9736-7232-4e4c-9860-4f3d59d96072\\scratchpad",
+      "C:\\Users\\Admin\\AppData\\Local\\Temp\\claude\\c--Users-Admin-Dungeon-Crawler\\cd3a9736-7232-4e4c-9860-4f3d59d96072\\scratchpad\\shots_final"
     ]
   }
 }
