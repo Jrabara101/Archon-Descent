@@ -3426,17 +3426,18 @@ class DungeonEngine {
 
     randomShrineType() {
         const r = Math.random();
-        if (r < 0.20) return 'blood';
-        if (r < 0.40) return 'purify';
-        if (r < 0.52) return 'haste';
-        if (r < 0.66) return 'anvil';
-        if (r < 0.78) return 'gamble';
-        if (r < 0.90) return 'well';
+        if (r < 0.15) return 'blood';
+        if (r < 0.30) return 'purify';
+        if (r < 0.42) return 'haste';
+        if (r < 0.56) return 'anvil';
+        if (r < 0.68) return 'gamble';
+        if (r < 0.80) return 'well';
+        if (r < 0.90) return 'healing';
         return 'curse';
     }
     spawnShrine(x, y) {
         const type = this.randomShrineType();
-        const icons = { blood: '🩸', purify: '💠', haste: '⚡', anvil: '⚒️', gamble: '🎲', well: '⛲', curse: '💀' };
+        const icons = { blood: '🩸', purify: '💠', haste: '⚡', anvil: '⚒️', gamble: '🎲', well: '⛲', curse: '💀', healing: '💖' };
         this.shrines.push({ x, y, type, icon: icons[type] });
     }
 
@@ -4040,6 +4041,17 @@ class DungeonEngine {
                 this.player.baseAtk += 2;
                 this.logMessage('Sacrificed health for power at Blood Altar.', 'log-system');
                 this.shrines.splice(shrineIndex, 1);
+            } else if (shrine.type === 'healing') {
+                if (this.player.gold >= 30) {
+                    this.player.gold -= 30;
+                    const heal = Math.floor(this.player.maxHp * 0.5);
+                    this.player.hp = Math.min(this.player.maxHp, this.player.hp + heal);
+                    this.spawnDamageNumber(this.player.x, this.player.y, `+${heal}`, '#34d399');
+                    this.logMessage('Spent 30 gold to restore 50% health at the Healing Shrine.', 'log-level');
+                    this.shrines.splice(shrineIndex, 1);
+                } else {
+                    this.logMessage('The Healing Shrine demands 30 gold.', 'log-system');
+                }
             } else if (shrine.type === 'purify') {
                 const cost = 15 + this.level * 3;
                 if (this.player.gold >= cost) {
@@ -4400,7 +4412,15 @@ class DungeonEngine {
 
     // Central player-damage funnel: applies haste exposure, relic modifiers,
     // and the Phoenix Feather death-save. Returns the final damage dealt.
-    damagePlayer(rawDmg) {
+    damagePlayer(rawDmg, canDodge = false) {
+        if (canDodge) {
+            const dodgeChance = this.getPlayerDodge();
+            if (Math.random() < dodgeChance / 100) {
+                this.spawnDamageNumber(this.player.x, this.player.y, 'DODGED!', '#34d399');
+                this.logMessage('You dodged the attack!', 'log-combat-player');
+                return 0;
+            }
+        }
         let dmg = rawDmg * this.getIncomingDamageMultiplier();
         if (this.relics.includes('glass_cannon')) dmg *= 1.15;
         if (this.activeMutators && this.activeMutators.includes('glass')) dmg *= 1.3;
@@ -4487,7 +4507,8 @@ class DungeonEngine {
                 this.luckyCounter = (this.luckyCounter || 0) + 1;
                 if (this.luckyCounter >= 4) { this.luckyCounter = 0; forced = true; }
             }
-            if (forced || Math.random() < Math.min(0.6, (5 + this.player.lvl) / 100)) {
+            const critChance = this.getPlayerCrit();
+            if (forced || Math.random() < critChance / 100) {
                 isCrit = true; rawDmg = Math.ceil(rawDmg * 2);
             }
         }
@@ -4497,6 +4518,12 @@ class DungeonEngine {
         if (this.talents.includes('vampiric')) {
             const heal = Math.floor(dmg * 0.15);
             if (heal > 0) { this.player.hp = Math.min(this.player.maxHp, this.player.hp + heal); this.spawnDamageNumber(this.player.x, this.player.y, `+${heal}`, '#34d399'); }
+        }
+
+        // Venomous talent
+        if (this.talents.includes('venomous') && enemy.hp > 0 && Math.random() < 0.25) {
+            this.applyStatus(enemy, 'poison', 3);
+            this.spawnDamageNumber(enemy.x, enemy.y, 'POISONED!', '#84cc16');
         }
         // Bloodlust mutator: lifesteal on every hit
         if (this.activeMutators && this.activeMutators.includes('bloodlust')) {
@@ -4860,16 +4887,18 @@ class DungeonEngine {
             if (dist === Math.floor(dist) || dist < 4) { // Roughly line of sight
                 // Shoot player
                 this.particles.push({ x: enemy.visualX * this.tileSize, y: enemy.visualY * this.tileSize, tx: this.player.visualX * this.tileSize, ty: this.player.visualY * this.tileSize, life: 1, decay: 0.1, type: 'projectile', color: '#d1d5db', trailTimer: 0, cb: () => {
-                    const dmg = this.damagePlayer(Math.max(1, enemy.atk - this.getPlayerDefense()));
-                    this.triggerHitFlash(this.player); this.triggerKnockback(this.player, enemy.x, enemy.y); this.resetGhostDelay(this.player);
-                    this.spawnBloodParticles(this.player.x, this.player.y, '#fb7185');
-                    this.spawnSparks(this.player.x, this.player.y);
-                    this.spawnDamageNumber(this.player.x, this.player.y, `-${dmg}`, '#fb7185');
-                    this.logMessage(`${enemy.name} shoots you for ${dmg}!`, 'log-combat-enemy');
-                    if (enemy.affixes && enemy.affixes.includes('vampiric')) {
-                        const heal = Math.floor(dmg * 0.3);
-                        enemy.hp = Math.min(enemy.maxHp, enemy.hp + heal);
-                        this.spawnDamageNumber(enemy.x, enemy.y, `+${heal}`, '#34d399');
+                    const dmg = this.damagePlayer(Math.max(1, enemy.atk - this.getPlayerDefense()), true);
+                    if (dmg > 0) {
+                        this.triggerHitFlash(this.player); this.triggerKnockback(this.player, enemy.x, enemy.y); this.resetGhostDelay(this.player);
+                        this.spawnBloodParticles(this.player.x, this.player.y, '#fb7185');
+                        this.spawnSparks(this.player.x, this.player.y);
+                        this.spawnDamageNumber(this.player.x, this.player.y, `-${dmg}`, '#fb7185');
+                        this.logMessage(`${enemy.name} shoots you for ${dmg}!`, 'log-combat-enemy');
+                        if (enemy.affixes && enemy.affixes.includes('vampiric')) {
+                            const heal = Math.floor(dmg * 0.3);
+                            enemy.hp = Math.min(enemy.maxHp, enemy.hp + heal);
+                            this.spawnDamageNumber(enemy.x, enemy.y, `+${heal}`, '#34d399');
+                        }
                     }
                     if (this.player.hp <= 0) this.handleGameOver();
                 }});
@@ -4900,22 +4929,24 @@ class DungeonEngine {
         }
 
         if (dist <= 1.5) {
-            const dmg = this.damagePlayer(Math.max(1, enemy.atk - this.getPlayerDefense()));
-            if (this.talents.includes('thorns') || (this.equipped.shield && this.equipped.shield.uniqueEffect === 'thorns')) {
-                let ret = this.applyDamageToEnemy(enemy, Math.floor(dmg * 0.25));
-                enemy.hp -= ret; this.spawnDamageNumber(enemy.x, enemy.y, `-${ret}`, '#facc15');
-                this.triggerHitFlash(enemy); this.resetGhostDelay(enemy);
-            }
-            this.triggerHitFlash(this.player); this.triggerKnockback(this.player, enemy.x, enemy.y); this.resetGhostDelay(this.player);
+            const dmg = this.damagePlayer(Math.max(1, enemy.atk - this.getPlayerDefense()), true);
             this.spawnAttackSwipe(enemy.x, enemy.y, this.player.x, this.player.y);
-            sfx.playHurt(); this.triggerCameraShake(8, 200);
-            this.spawnBloodParticles(this.player.x, this.player.y, '#fb7185');
-            this.spawnDamageNumber(this.player.x, this.player.y, `-${dmg}`, '#fb7185');
-            this.logMessage(`${enemy.name} hits you for ${dmg}!`, 'log-combat-enemy');
-            if (enemy.affixes && enemy.affixes.includes('vampiric')) {
-                const heal = Math.floor(dmg * 0.3);
-                enemy.hp = Math.min(enemy.maxHp, enemy.hp + heal);
-                this.spawnDamageNumber(enemy.x, enemy.y, `+${heal}`, '#34d399');
+            if (dmg > 0) {
+                if (this.talents.includes('thorns') || (this.equipped.shield && this.equipped.shield.uniqueEffect === 'thorns')) {
+                    let ret = this.applyDamageToEnemy(enemy, Math.floor(dmg * 0.25));
+                    enemy.hp -= ret; this.spawnDamageNumber(enemy.x, enemy.y, `-${ret}`, '#facc15');
+                    this.triggerHitFlash(enemy); this.resetGhostDelay(enemy);
+                }
+                this.triggerHitFlash(this.player); this.triggerKnockback(this.player, enemy.x, enemy.y); this.resetGhostDelay(this.player);
+                sfx.playHurt(); this.triggerCameraShake(8, 200);
+                this.spawnBloodParticles(this.player.x, this.player.y, '#fb7185');
+                this.spawnDamageNumber(this.player.x, this.player.y, `-${dmg}`, '#fb7185');
+                this.logMessage(`${enemy.name} hits you for ${dmg}!`, 'log-combat-enemy');
+                if (enemy.affixes && enemy.affixes.includes('vampiric')) {
+                    const heal = Math.floor(dmg * 0.3);
+                    enemy.hp = Math.min(enemy.maxHp, enemy.hp + heal);
+                    this.spawnDamageNumber(enemy.x, enemy.y, `+${heal}`, '#34d399');
+                }
             }
         } else {
             if (this.hasStatus(enemy, 'chill') && Math.random() < 0.4) return; // Chilled: sometimes fails to close the distance
@@ -5024,7 +5055,10 @@ class DungeonEngine {
             { id: 'focus', name: 'Deep Focus', desc: '+30 Max MP', icon: '🔮' },
             { id: 'strength', name: 'Brute Force', desc: '+5 Base ATK', icon: '💪' },
             { id: 'berserker', name: "Berserker's Fury", desc: 'Below 30% HP, 30% chance to strike again.', icon: '⚔️' },
-            { id: 'executioner', name: 'Executioner', desc: 'Critical hits heal you for 25% of damage dealt.', icon: '💀' }
+            { id: 'executioner', name: 'Executioner', desc: 'Critical hits heal you for 25% of damage dealt.', icon: '💀' },
+            { id: 'evasion', name: 'Evasion', desc: '+15% Dodge Chance.', icon: '💨' },
+            { id: 'assassin', name: 'Assassin', desc: '+15% Critical Hit Chance.', icon: '🗡️' },
+            { id: 'venomous', name: 'Venomous Strikes', desc: 'Melee attacks have a 25% chance to poison.', icon: '🐍' }
         ];
         
         // Pick 3 unique
@@ -5519,6 +5553,18 @@ class DungeonEngine {
         return this.player.baseDef + a + s + buff;
     }
 
+    getPlayerCrit() {
+        let crit = 5 + this.player.lvl;
+        if (this.talents.includes('assassin')) crit += 15;
+        return crit;
+    }
+
+    getPlayerDodge() {
+        let dodge = (this.player.classType === 'rogue' ? 10 : 5) + Math.floor(this.player.lvl * (this.player.classType === 'rogue' ? 1.5 : 1));
+        if (this.talents.includes('evasion')) dodge += 15;
+        return dodge;
+    }
+
     updateStatsUI() {
         if (!this.player) return;
         this.hpBar.style.width = `${Math.max(0, (this.player.hp / this.player.maxHp) * 100)}%`; this.hpValue.innerText = `${this.player.hp} / ${this.player.maxHp}`;
@@ -5568,10 +5614,8 @@ class DungeonEngine {
         let rank = this.player.lvl >= 10 ? 'Archon' : this.player.lvl >= 7 ? 'Champion' : this.player.lvl >= 4 ? 'Veteran' : 'Initiate';
         this.charRank.innerText = `Lvl ${this.player.lvl} ${rank}`;
         
-        let crit = 5 + this.player.lvl;
-        let dodge = (this.player.classType === 'rogue' ? 10 : 5) + Math.floor(this.player.lvl * (this.player.classType === 'rogue' ? 1.5 : 1));
-        this.charCrit.innerText = `${crit}%`;
-        this.charDodge.innerText = `${dodge}%`;
+        this.charCrit.innerText = `${this.getPlayerCrit()}%`;
+        this.charDodge.innerText = `${this.getPlayerDodge()}%`;
 
         // Special rows
         this.detailLifestealRow.style.display = this.talents.includes('vampiric') ? 'flex' : 'none';
@@ -5590,7 +5634,10 @@ class DungeonEngine {
             focus: { name: 'Deep Focus', icon: '🔮' },
             strength: { name: 'Brute Force', icon: '💪' },
             berserker: { name: "Berserker's Fury", icon: '⚔️' },
-            executioner: { name: 'Executioner', icon: '💀' }
+            executioner: { name: 'Executioner', icon: '💀' },
+            evasion: { name: 'Evasion', icon: '💨' },
+            assassin: { name: 'Assassin', icon: '🗡️' },
+            venomous: { name: 'Venomous Strikes', icon: '🐍' }
         };
 
         let visibleTalents = 0;
