@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Archons Descent</string>
+    <string name="title_activity_main">Archons Descent</string>
+    <string name="package_name">com.archonsdescent.game</string>
+    <string name="custom_url_scheme">com.archonsdescent.game</string>
+</resources>
