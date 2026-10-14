@@ -1,0 +1,83 @@
+/* Design tokens. Palette inherited from Ideas/Design.md; rarity ramp from the game data. */
+:root {
+    --ui-scale: 1;
+
+    --bg: #090d16;
+    --bg-deep: #05070e;
+    --surface: #131a2c;
+    --surface-2: #1e2942;
+    --surface-3: #283553;
+    --line: rgba(148, 163, 184, 0.16);
+    --line-strong: rgba(148, 163, 184, 0.32);
+
+    --text: #e2e8f0;
+    --text-strong: #f8fafc;
+    --muted: #94a3b8;
+    --faint: #64748b;
+
+    --cyan: #38bdf8;
+    --cyan-deep: #0c4a6e;
+    --green: #34d399;
+    --red: #fb7185;
+    --red-deep: #7f1d1d;
+    --orange: #fb923c;
+    --gold: #eab308;
+    --gold-soft: #fde68a;
+    --violet: #a855f7;
+
+    --biome-catacombs: #64748b;
+    --biome-forges: #ea580c;
+    --biome-void: #7c3aed;
+
+    --rarity-common: #94a3b8;
+    --rarity-rare: #3b82f6;
+    --rarity-epic: #a855f7;
+    --rarity-legendary: #eab308;
+
+    --font-display: 'Press Start 2P', 'Courier New', monospace;
+    --font-ui: 'Chakra Petch', 'Segoe UI', system-ui, sans-serif;
+
+    /* Type scale (rem, so the interface-size setting scales it) */
+    --fs-xs: 0.8125rem;
+    --fs-sm: 0.9375rem;
+    --fs-md: 1rem;
+    --fs-lg: 1.25rem;
+    --fs-xl: 1.625rem;
+    --fs-2xl: 2.125rem;
+
+    --space-1: 0.25rem;
+    --space-2: 0.5rem;
+    --space-3: 0.75rem;
+    --space-4: 1rem;
+    --space-5: 1.5rem;
+    --space-6: 2rem;
+    --space-7: 3rem;
+
+    /* Radii carry hierarchy: controls are near-square, containers round slightly more. */
+    --r-control: 3px;
+    --r-panel: 6px;
+    --r-modal: 10px;
+    --notch: 10px;
+
+    --z-stage: 0;
+    --z-page: 10;
+    --z-hud: 20;
+    --z-drawer: 30;
+    --z-modal: 40;
+    --z-toast: 50;
+
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-right: env(safe-area-inset-right, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+    --safe-left: env(safe-area-inset-left, 0px);
+
+    --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+    --dur: 180ms;
+}
+
+/* Colorblind-safe rarity ramp (blue/pink/orange read apart for most color vision types) */
+:root.colorblind {
+    --rarity-rare: #38bdf8;
+    --rarity-epic: #f472b6;
+    --rarity-legendary: #fb923c;
+}

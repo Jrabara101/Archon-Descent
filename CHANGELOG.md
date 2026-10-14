@@ -2,6 +2,32 @@
 
 All notable changes to Archon's Descent are documented in this file.
 
+## [2.0.0] - 2026-10-14
+
+### Changed
+
+- **React + Vite.** The game is now a Vite-built React app. The canvas engine lives in `src/game/` as ES modules; menus, HUD and modals are React components in `src/pages/` and `src/components/`, fed by a small event store (`src/bridge/store.js`) instead of the engine writing to the DOM. Run it with `npm run dev`; `npm run build` outputs `dist/`.
+- **New interface.** Title screen, an illustrated class select, a Modes page, the Archon Hub, a single Codex (bestiary, lore by chapter, achievements, run history) and a Settings page. Pages are hash-routed, so the browser back button works.
+- **Character art.** Class portraits, bestiary art and NPC art from the illustrated set ship as optimized WebP (0.8 MB, down from 26 MB of PNGs) via `scripts/optimize-art.mjs`.
+- **Guardian pacing.** Each biome now ends in its own guardian every 5 floors: Bone Colossus (B05), Molten Behemoth (B10), Tidemother (B15), Void Archon Prime (B20). Previously normal runs only ever met the Void boss. Boss Rush is now four guardians.
+- **Mobile.** A hold-to-repeat movement pad with a wait button, a compact touch belt, safe-area insets, and a Settings option to force touch controls on or off. Capacitor now points at `dist/`.
+
+### Added
+
+- **The Drowned Depths (B11–B15).** A fourth biome with current tiles that drag you downstream, four new creatures (Drowned Husk, Siren, Tide Leech, Abyssal Angler), the Tidemother guardian whose second phase floods the arena, a named unique (Tidebreaker), the Trial of Tides, three lore scraps and two achievements.
+- Gamepad navigation in menus (D-pad moves focus, A selects, B goes back).
+- Save and quit to title from the pause menu, then Continue from the title screen.
+
+### Restored
+
+The August module split (`e515f9c`) silently dropped about 40 engine methods. These work again: settings (volume, shake, colorblind, UI scale), mutator selection, save export/import, build-card export, gamepad play, Archon Hub purchases, Boss Rush and Endless class selection, the Codex screens, anvil enchanting, sneak attacks, enemy awareness, armored/swift/tank damage rules, burn spread, every relic effect, and the level-up cinematic.
+
+### Fixed
+
+- v1.2.0 features that existed only as data now do what their descriptions say: weapon traits (Cleave, Ricochet), the Volatile, Warded and Frenzied affixes, the six class talents, relic-pair synergies, unidentified relics, class mastery colors, loadout presets, the 6-relic aura, the personal-best diff and the "who keeps killing you" death line.
+- Story beats now trigger at the right depths, and the story ends in an epilogue after the Void Archon Prime.
+- Saves written by either earlier build are migrated on load, so no progress is lost.
+
 ## [1.2.2] - 2026-08-13
 
 ### Added

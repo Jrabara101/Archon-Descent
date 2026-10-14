@@ -47,3 +47,7 @@ node_modules/
 
 # Raw archives
 *.zip
+
+# Raw illustrated art (optimized copies live in public/art; regenerate with scripts/optimize-art.mjs)
+/Characters 1/
+/Characters 2/
