@@ -47,60 +47,46 @@ function attachGameplayMethods(proto) {
 
         this.charClassTitle.innerText = playerClass.toUpperCase();
 
-        const ultIcon = document.getElementById('ability-ult').querySelector('.icon');
         if (playerClass === 'warrior') {
             this.player.maxHp = 120; this.player.hp = 120; this.player.baseDef = 3;
             this.equipped.weapon = { id: 'w1', name: 'Broadsword', type: 'weapon', rarity: 'common', statBonus: 4, icon: '🗡️' };
             this.equipped.shield = { id: 's1', name: 'Wooden Shield', type: 'shield', rarity: 'common', statBonus: 3, icon: '🛡️' };
-            document.getElementById('ability-1').querySelector('.icon').innerText = '🛡️';
-            document.getElementById('ability-2').querySelector('.icon').innerText = '📯';
-            ultIcon.innerText = '👊';
             this.player.maxSkillCooldown2 = 10;
         } else if (playerClass === 'mage') {
             this.player.maxHp = 80; this.player.hp = 80; this.player.maxMp = 100; this.player.mp = 100; this.player.baseAtk = 15;
             this.equipped.weapon = { id: 'w2', name: 'Apprentice Staff', type: 'weapon', rarity: 'common', statBonus: 6, icon: '🪄' };
-            document.getElementById('ability-1').querySelector('.icon').innerText = '🔥';
-            document.getElementById('ability-2').querySelector('.icon').innerText = '❄️';
-            ultIcon.innerText = '☄️';
             this.player.maxSkillCooldown = 3;
             this.player.maxSkillCooldown2 = 6;
         } else if (playerClass === 'rogue') {
             this.player.baseAtk = 12; this.player.baseFov = 8;
             this.equipped.weapon = { id: 'w3', name: 'Twin Daggers', type: 'weapon', rarity: 'common', statBonus: 5, icon: '🔪' };
-            document.getElementById('ability-1').querySelector('.icon').innerText = '💨';
-            document.getElementById('ability-2').querySelector('.icon').innerText = '🗡️';
-            ultIcon.innerText = '☠️';
             this.player.maxSkillCooldown = 4;
             this.player.maxSkillCooldown2 = 7;
         } else if (playerClass === 'paladin') {
             this.player.maxHp = 115; this.player.hp = 115; this.player.baseDef = 4; this.player.baseAtk = 9;
             this.equipped.weapon = { id: 'w4', name: 'Blessed Mace', type: 'weapon', rarity: 'common', statBonus: 5, icon: '🔨' };
             this.equipped.shield = { id: 's2', name: 'Aegis of Dawn', type: 'shield', rarity: 'common', statBonus: 3, icon: '🔰' };
-            document.getElementById('ability-1').querySelector('.icon').innerText = '✨';
-            document.getElementById('ability-2').querySelector('.icon').innerText = '🙏';
-            ultIcon.innerText = '⚖️';
             this.player.maxSkillCooldown = 4;
             this.player.maxSkillCooldown2 = 9;
         } else if (playerClass === 'necromancer') {
             this.player.maxHp = 75; this.player.hp = 75; this.player.maxMp = 110; this.player.mp = 110; this.player.baseAtk = 13;
             this.equipped.weapon = { id: 'w5', name: 'Bone Scepter', type: 'weapon', rarity: 'common', statBonus: 6, icon: '🦴' };
-            document.getElementById('ability-1').querySelector('.icon').innerText = '💀';
-            document.getElementById('ability-2').querySelector('.icon').innerText = '🩸';
-            ultIcon.innerText = '⚰️';
             this.player.maxSkillCooldown = 6;
             this.player.maxSkillCooldown2 = 4;
         } else if (playerClass === 'ranger') {
             this.player.baseAtk = 13; this.player.baseFov = 9;
             this.equipped.weapon = { id: 'w6', name: 'Recurve Bow', type: 'weapon', rarity: 'common', statBonus: 6, icon: '🏹' };
-            document.getElementById('ability-1').querySelector('.icon').innerText = '🎯';
-            document.getElementById('ability-2').querySelector('.icon').innerText = '🪤';
-            ultIcon.innerText = '🌧️';
             this.player.maxSkillCooldown = 4;
             this.player.maxSkillCooldown2 = 6;
         }
 
         this.player.maxHp += (this.meta.vitality || 0) * 5; this.player.hp = this.player.maxHp;
         this.player.baseAtk += (this.meta.power || 0);
+
+        // Swap the belt over to animated SVG art for this class and start the
+        // vector effect layer that skill casts draw into.
+        this.installSkillIcons(playerClass);
+        this.initSkillFXLayer();
     };
 
     proto.generateLevel = function() {

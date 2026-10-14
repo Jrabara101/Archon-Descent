@@ -1,0 +1,6 @@
+{
+  "name": "Sprite Forge",
+  "description": "High-resolution PNG to pixel-art sprite sheet converter and action layout editor with JSON atlas export.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

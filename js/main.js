@@ -92,6 +92,8 @@ class DungeonEngine {
 
         this.viewportW = window.innerWidth;
         this.viewportH = window.innerHeight;
+
+        this.resizeSkillFXLayer();
     }
 
     triggerCameraShake(intensity, durationMs) {
@@ -432,6 +434,8 @@ class DungeonEngine {
 
         const ox = -Math.round(this.camX) + this.shakeX;
         const oy = -Math.round(this.camY) + this.shakeY;
+
+        this.syncSkillFXCamera(ox, oy);
 
         ctx.save();
         ctx.translate(ox, oy);
@@ -867,6 +871,8 @@ class DungeonEngine {
         bindBtn('start-history-btn', () => this.openHistory());
         bindBtn('start-achievements-btn', () => this.openAchievements());
         bindBtn('start-settings-btn', () => this.openSettings());
+        bindBtn('start-spriteforge-btn', () => this.openSpriteForge());
+        bindBtn('spriteforge-back-btn', () => this.closeSpriteForge());
         bindBtn('whats-new-btn', () => this.openWhatsNew());
 
         // Modals back/close buttons
@@ -1079,6 +1085,18 @@ class DungeonEngine {
         });
     }
 
+    openSpriteForge() {
+        this.openMenuScreen('spriteforge-overlay');
+        // Lazy-load: only hit the network the first time the tool is opened.
+        const frame = document.getElementById('spriteforge-frame');
+        if (frame && frame.src !== frame.dataset.src) frame.src = frame.dataset.src;
+    }
+
+    closeSpriteForge() {
+        document.getElementById('spriteforge-overlay').classList.add('hidden');
+        document.getElementById('start-overlay').classList.remove('hidden');
+    }
+
     openBestiary() {
         this.openMenuScreen('bestiary-overlay');
         const list = document.getElementById('bestiary-list');
@@ -1205,6 +1223,7 @@ attachSkillMethods(DungeonEngine.prototype);
 attachTurnMethods(DungeonEngine.prototype);
 attachItemMethods(DungeonEngine.prototype);
 attachUIOverlayMethods(DungeonEngine.prototype);
+attachSkillFXMethods(DungeonEngine.prototype);
 
 // Initialize game on load
 window.addEventListener('DOMContentLoaded', () => {

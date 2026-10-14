@@ -68,11 +68,14 @@ function attachSkillMethods(proto) {
                     enemy.hp -= this.applyDamageToEnemy(enemy, this.getPlayerAttack());
                     this.triggerHitFlash(enemy); this.triggerKnockback(enemy, this.player.x, this.player.y); this.resetGhostDelay(enemy);
                     this.spawnDamageNumber(tx, ty, 'SLAM!', '#facc15');
+                    this.fxImpact(tx, ty, '#facc15');
                     hit = true;
                 }
             });
             if (hit) {
                 sfx.playHit(); this.triggerCameraShake(10, 200);
+                this.fxNova(this.player.x, this.player.y, '#facc15', 2.2, 560);
+                this.pulseSkillIcon('ability-1');
                 this.logMessage(`You used Shield Slam!`, 'log-combat-player');
                 this.player.skillCooldown = this.player.maxSkillCooldown;
                 this.checkEnemyDeaths();
@@ -91,6 +94,8 @@ function attachSkillMethods(proto) {
                     this.player.skillCooldown = this.player.maxSkillCooldown;
                     sfx.playMagic();
                     this.spawnCastWindup(this.player);
+                    this.fxCastCircle(this.player.x, this.player.y, '#f97316', 620);
+                    this.pulseSkillIcon('ability-1');
                     this.particles.push({ x: this.player.visualX * this.tileSize, y: this.player.visualY * this.tileSize, tx: target.x * this.tileSize, ty: target.y * this.tileSize, life: 1, decay: 0.1, type: 'projectile', color: '#f97316', trailTimer: 0, cb: () => {
                         const fireballDmg = this.applyDamageToEnemy(target, this.player.baseAtk * 2);
                         target.hp -= fireballDmg;
@@ -99,6 +104,8 @@ function attachSkillMethods(proto) {
                         this.spawnBloodParticles(target.x, target.y, '#f97316');
                         this.spawnSparks(target.x, target.y);
                         this.spawnDamageNumber(target.x, target.y, `-${fireballDmg}`, '#f97316');
+                        this.fxNova(target.x, target.y, '#f97316', 2, 520);
+                        this.fxImpact(target.x, target.y, '#fbbf24');
                         this.logMessage(`Fireball hits ${target.name}!`, 'log-combat-magic');
                         if (target.hp <= 0) { this.hitStopTimer = 70; this.triggerCameraShake(10, 150); }
                         this.checkEnemyDeaths();
@@ -115,8 +122,13 @@ function attachSkillMethods(proto) {
             }
             if (options.length > 0) {
                 const choice = options[Math.floor(Math.random() * options.length)];
+                const fromX = this.player.x, fromY = this.player.y;
                 this.player.x = choice.x; this.player.y = choice.y;
                 sfx.playMagic();
+                this.fxNova(fromX, fromY, '#34d399', 1.4, 460);
+                this.fxBeam(fromX, fromY, choice.x, choice.y, '#34d399', 360);
+                this.fxNova(choice.x, choice.y, '#34d399', 1.4, 460);
+                this.pulseSkillIcon('ability-1');
                 this.player.skillCooldown = this.player.maxSkillCooldown;
                 this.logMessage(`Shadowstep!`, 'log-combat-player');
                 this.postTurnSystems();
@@ -135,6 +147,9 @@ function attachSkillMethods(proto) {
                     this.player.hp = Math.min(this.player.maxHp, this.player.hp + heal);
                     this.triggerHitFlash(enemy); this.triggerKnockback(enemy, this.player.x, this.player.y); this.resetGhostDelay(enemy);
                     this.spawnAttackSwipe(this.player.x, this.player.y, tx, ty);
+                    this.fxSlash(this.player.x, this.player.y, tx, ty, '#facc15');
+                    this.fxImpact(tx, ty, '#fde68a');
+                    this.fxUplift(this.player.x, this.player.y, '#34d399', 5, 700);
                     this.spawnDamageNumber(tx, ty, `-${dmg}`, '#facc15');
                     this.spawnDamageNumber(this.player.x, this.player.y, `+${heal}`, '#34d399');
                     this.logMessage(`Holy Strike smites ${enemy.name}!`, 'log-combat-player');
@@ -143,6 +158,7 @@ function attachSkillMethods(proto) {
             });
             if (hit) {
                 sfx.playHit(); this.triggerCameraShake(6, 150);
+                this.pulseSkillIcon('ability-1');
                 this.player.skillCooldown = this.player.maxSkillCooldown;
                 this.checkEnemyDeaths();
                 this.postTurnSystems();
@@ -162,6 +178,9 @@ function attachSkillMethods(proto) {
                     this.allies.push({ x: spot.x, y: spot.y, visualX: spot.x, visualY: spot.y, icon: '💀', color: '#a78bfa', name: 'Raised Skeleton', type: 'summon', turnsLeft: 60, atk: 6 + this.player.lvl, hitFlash: 0, knockX: 0, knockY: 0 });
                     sfx.playMagic();
                     this.spawnLevelUpParticles();
+                    this.fxCastCircle(this.player.x, this.player.y, '#a78bfa', 700);
+                    this.fxUplift(spot.x, spot.y, '#a78bfa', 9, 820);
+                    this.pulseSkillIcon('ability-1');
                     this.logMessage('You raise a skeleton to fight at your side!', 'log-combat-player');
                     this.checkAchievements();
                     this.postTurnSystems();
@@ -189,10 +208,13 @@ function attachSkillMethods(proto) {
                         hitEnemy.hp -= dmg;
                         this.triggerHitFlash(hitEnemy); this.resetGhostDelay(hitEnemy);
                         this.spawnDamageNumber(hitEnemy.x, hitEnemy.y, `-${dmg}`, '#14b8a6');
+                        this.fxImpact(hitEnemy.x, hitEnemy.y, '#14b8a6');
                         hitAny = true;
                     }
                 }
                 this.spawnAttackSwipe(this.player.x, this.player.y, target.x, target.y);
+                this.fxBeam(this.player.x, this.player.y, tx, ty, '#14b8a6', 400);
+                this.pulseSkillIcon('ability-1');
                 if (hitAny) { this.triggerCameraShake(5, 120); this.logMessage('Piercing Shot rips through your foes!', 'log-combat-player'); }
                 this.checkEnemyDeaths();
                 this.postTurnSystems();
@@ -208,6 +230,10 @@ function attachSkillMethods(proto) {
             this.player.skillCooldown2 = this.player.maxSkillCooldown2;
             sfx.playLevelUp();
             this.spawnLevelUpParticles();
+            this.fxNova(this.player.x, this.player.y, '#ef4444', 2.6, 700);
+            setTimeout(() => this.fxNova(this.player.x, this.player.y, '#fca5a5', 3.2, 700), 140);
+            this.fxUplift(this.player.x, this.player.y, '#ef4444', 8, 780);
+            this.pulseSkillIcon('ability-2');
             this.logMessage('Battle Cry! Attack and Defense bolstered.', 'log-combat-player');
             this.postTurnSystems();
         } else if (this.player.classType === 'mage') {
@@ -222,9 +248,13 @@ function attachSkillMethods(proto) {
                         this.applyStatus(enemy, 'chill', 4);
                         this.triggerHitFlash(enemy); this.resetGhostDelay(enemy);
                         this.spawnDamageNumber(enemy.x, enemy.y, `-${dmg}`, '#60a5fa');
+                        this.fxImpact(enemy.x, enemy.y, '#bfdbfe', 340);
                     }
                 });
                 this.spawnBloodParticles(this.player.x, this.player.y, '#60a5fa');
+                this.fxCastCircle(this.player.x, this.player.y, '#60a5fa', 520);
+                this.fxNova(this.player.x, this.player.y, '#60a5fa', 1.8, 600);
+                this.pulseSkillIcon('ability-2');
                 this.player.skillCooldown2 = this.player.maxSkillCooldown2;
                 sfx.playMagic();
                 this.logMessage('Frost Nova!', 'log-combat-magic');
@@ -243,6 +273,9 @@ function attachSkillMethods(proto) {
                     this.applyStatus(enemy, 'poison', 5);
                     this.triggerHitFlash(enemy); this.triggerKnockback(enemy, this.player.x, this.player.y); this.resetGhostDelay(enemy);
                     this.spawnDamageNumber(enemy.x, enemy.y, `-${dmg}`, '#84cc16');
+                    this.fxSlash(this.player.x, this.player.y, enemy.x, enemy.y, '#84cc16');
+                    this.fxUplift(enemy.x, enemy.y, '#84cc16', 5, 900);
+                    this.pulseSkillIcon('ability-2');
                     this.logMessage(`Poison Blade strikes ${enemy.name}!`, 'log-combat-player');
                     hit = true;
                 }
@@ -262,6 +295,9 @@ function attachSkillMethods(proto) {
                 this.player.skillCooldown2 = this.player.maxSkillCooldown2;
                 sfx.playLevelUp();
                 this.spawnLevelUpParticles();
+                this.fxCastCircle(this.player.x, this.player.y, '#facc15', 820);
+                this.fxUplift(this.player.x, this.player.y, '#34d399', 12, 900);
+                this.pulseSkillIcon('ability-2');
                 this.spawnDamageNumber(this.player.x, this.player.y, `+${layHeal}`, '#34d399');
                 this.logMessage('Lay on Hands! Wounds close, curses lift.', 'log-level');
                 this.postTurnSystems();
@@ -279,6 +315,8 @@ function attachSkillMethods(proto) {
                     this.player.skillCooldown2 = this.player.maxSkillCooldown2;
                     sfx.playMagic();
                     this.spawnCastWindup(this.player);
+                    this.fxCastCircle(this.player.x, this.player.y, '#7c3aed', 620);
+                    this.pulseSkillIcon('ability-2');
                     this.particles.push({ x: this.player.visualX * this.tileSize, y: this.player.visualY * this.tileSize, tx: target.x * this.tileSize, ty: target.y * this.tileSize, life: 1, decay: 0.1, type: 'projectile', color: '#7c3aed', trailTimer: 0, cb: () => {
                         const dmg = this.applyDamageToEnemy(target, this.getPlayerAttack() + 10);
                         target.hp -= dmg;
@@ -288,6 +326,9 @@ function attachSkillMethods(proto) {
                         this.spawnBloodParticles(target.x, target.y, '#7c3aed');
                         this.spawnDamageNumber(target.x, target.y, `-${dmg}`, '#7c3aed');
                         this.spawnDamageNumber(this.player.x, this.player.y, `+${heal}`, '#34d399');
+                        // Siphon reads target -> caster, the opposite of the bolt.
+                        this.fxBeam(target.x, target.y, this.player.x, this.player.y, '#7c3aed', 520);
+                        this.fxUplift(this.player.x, this.player.y, '#34d399', 6, 700);
                         this.logMessage(`Drain Life siphons ${target.name}!`, 'log-combat-magic');
                         if (target.hp <= 0) { this.hitStopTimer = 70; this.triggerCameraShake(10, 150); }
                         this.checkEnemyDeaths();
@@ -301,6 +342,9 @@ function attachSkillMethods(proto) {
                 this.player.skillCooldown2 = this.player.maxSkillCooldown2;
                 sfx.playHit();
                 this.spawnShards(this.player.x, this.player.y, '#78350f');
+                this.fxNova(this.player.x, this.player.y, '#a16207', 1.2, 480);
+                this.fxImpact(this.player.x, this.player.y, '#a16207', 420);
+                this.pulseSkillIcon('ability-2');
                 this.logMessage('You lay a snare trap.', 'log-combat-player');
                 this.postTurnSystems();
             }
@@ -331,6 +375,10 @@ function attachSkillMethods(proto) {
             this.player.battleCryTurns = Math.max(this.player.battleCryTurns, 6);
             sfx.playHit(); this.triggerCameraShake(16, 300); this.hitStopTimer = 100;
             this.spawnLevelUpParticles();
+            this.fxImpact(this.player.x, this.player.y, '#facc15', 520);
+            [0, 130, 260].forEach((d, i) => setTimeout(
+                () => this.fxNova(this.player.x, this.player.y, i % 2 ? '#fde68a' : '#ef4444', 2.4 + i * 0.9, 720), d));
+            this.pulseSkillIcon('ability-ult');
             this.logMessage(`TITAN'S WRATH! ${hitCount} enemies crushed!`, 'log-combat-player');
             this.checkEnemyDeaths();
             this.postTurnSystems();
@@ -354,6 +402,11 @@ function attachSkillMethods(proto) {
                     hitCount++;
                 });
                 this.spawnDeathBurst({ x: cx, y: cy, color: '#f97316' });
+                this.fxSkyfall(cx, cy, '#f97316', 560);
+                // Scattered secondary strikes around the epicentre.
+                [[-1,-1],[1,-1],[-1,1],[1,1],[2,0],[-2,0]].forEach(([ox, oy], i) =>
+                    setTimeout(() => this.fxSkyfall(cx + ox, cy + oy, '#fb923c', 460), 120 + i * 90));
+                this.pulseSkillIcon('ability-ult');
                 this.logMessage(`METEOR STORM! ${hitCount} enemies burning!`, 'log-combat-magic');
                 this.checkEnemyDeaths();
                 this.postTurnSystems();
@@ -365,12 +418,18 @@ function attachSkillMethods(proto) {
                 const spots = [{x:1,y:0},{x:-1,y:0},{x:0,y:1},{x:0,y:-1}].map(d => ({ x: target.x + d.x, y: target.y + d.y })).filter(s => this.map[s.y] && this.map[s.y][s.x] === 1 && !this.enemies.some(e => e.x === s.x && e.y === s.y));
                 if (spots.length > 0) {
                     const spot = spots[Math.floor(Math.random() * spots.length)];
+                    const markFromX = this.player.x, markFromY = this.player.y;
                     this.player.x = spot.x; this.player.y = spot.y;
+                    this.fxBeam(markFromX, markFromY, spot.x, spot.y, '#34d399', 320);
                     this.player.ultimateCooldown = this.player.maxUltimateCooldown;
                     const dmg = this.applyDamageToEnemy(target, (this.getPlayerAttack() + 15) * 3);
                     target.hp -= dmg;
                     this.triggerHitFlash(target); this.resetGhostDelay(target);
                     sfx.playMagic(); this.triggerCameraShake(14, 250); this.hitStopTimer = 100;
+                    this.fxSlash(spot.x, spot.y, target.x, target.y, '#fb7185', 380);
+                    this.fxImpact(target.x, target.y, '#fb7185', 520);
+                    this.fxNova(target.x, target.y, '#fb7185', 2, 620);
+                    this.pulseSkillIcon('ability-ult');
                     this.spawnDamageNumber(target.x, target.y, 'DEATH MARK!', '#facc15');
                     this.spawnDamageNumber(target.x, target.y, `-${dmg}`, '#fb7185');
                     this.logMessage(`Death Mark obliterates ${target.name}!`, 'log-combat-player');
@@ -397,11 +456,16 @@ function attachSkillMethods(proto) {
                         enemy.hp -= dmg;
                         this.triggerHitFlash(enemy); this.resetGhostDelay(enemy);
                         this.spawnDamageNumber(tx, ty, `-${dmg}`, '#facc15');
+                        this.fxSkyfall(tx, ty, '#facc15', 480);
                         hitCount++;
                     }
                 }
             }
             sfx.playLevelUp(); this.triggerCameraShake(12, 250); this.spawnLevelUpParticles();
+            this.fxSkyfall(this.player.x, this.player.y, '#fde68a', 620);
+            this.fxCastCircle(this.player.x, this.player.y, '#facc15', 900);
+            this.fxUplift(this.player.x, this.player.y, '#34d399', 14, 900);
+            this.pulseSkillIcon('ability-ult');
             this.logMessage(`DIVINE JUDGMENT! Healed and smote ${hitCount} foes!`, 'log-level');
             this.checkEnemyDeaths();
             this.postTurnSystems();
@@ -416,10 +480,13 @@ function attachSkillMethods(proto) {
                 const sx = this.player.x + dx, sy = this.player.y + dy;
                 if (this.map[sy] && this.map[sy][sx] === 1 && !this.enemies.some(e => e.x === sx && e.y === sy) && !this.allies.some(a => a.x === sx && a.y === sy)) {
                     this.allies.push({ x: sx, y: sy, visualX: sx, visualY: sy, icon: '💀', color: '#a78bfa', name: 'Raised Skeleton', type: 'summon', turnsLeft: 60, atk: 6 + this.player.lvl, hitFlash: 0, knockX: 0, knockY: 0 });
+                    setTimeout(() => { this.fxNova(sx, sy, '#a78bfa', 1.2, 520); this.fxUplift(sx, sy, '#a78bfa', 8, 820); }, count * 110);
                     count++;
                 }
             }
             sfx.playMagic(); this.triggerCameraShake(10, 200); this.spawnLevelUpParticles();
+            this.fxCastCircle(this.player.x, this.player.y, '#a78bfa', 1000);
+            this.pulseSkillIcon('ability-ult');
             this.logMessage(`ARMY OF THE DEAD! ${count} skeletons rise!`, 'log-combat-player');
             this.checkAchievements();
             this.postTurnSystems();
@@ -428,13 +495,15 @@ function attachSkillMethods(proto) {
             const targets = this.enemies.filter(e => !e.dying && this.fog[e.y] && this.fog[e.y][e.x] === 2 && Math.hypot(e.x - this.player.x, e.y - this.player.y) <= range);
             if (targets.length > 0) {
                 this.player.ultimateCooldown = this.player.maxUltimateCooldown;
-                targets.forEach(t => {
+                targets.forEach((t, i) => {
                     const dmg = this.applyDamageToEnemy(t, Math.floor(this.getPlayerAttack() * 1.4));
                     t.hp -= dmg;
                     this.triggerHitFlash(t); this.resetGhostDelay(t);
                     this.spawnDamageNumber(t.x, t.y, `-${dmg}`, '#14b8a6');
+                    setTimeout(() => this.fxSkyfall(t.x, t.y, '#14b8a6', 440), i * 70);
                 });
                 sfx.playHit(); this.triggerCameraShake(12, 250); this.hitStopTimer = 80;
+                this.pulseSkillIcon('ability-ult');
                 this.logMessage(`RAIN OF ARROWS! ${targets.length} enemies struck!`, 'log-combat-player');
                 this.checkEnemyDeaths();
                 this.postTurnSystems();

@@ -59,8 +59,25 @@
                         <button class="glowing-btn small-menu-btn" id="start-history-btn">📜 History</button>
                         <button class="glowing-btn small-menu-btn" id="start-achievements-btn">🏆 Achievements</button>
                         <button class="glowing-btn small-menu-btn" id="start-settings-btn">⚙️ Settings</button>
+                        <button class="glowing-btn small-menu-btn" id="start-spriteforge-btn" style="border:1px solid #22d3ee; color:#22d3ee;" title="Convert PNG artwork into pixel-art sprite sheets">⚒️ Sprite Forge</button>
                         <button class="glowing-btn small-menu-btn hidden" id="whats-new-btn" style="border:1px solid var(--rarity-legendary); color:var(--rarity-legendary);">✨ What's New</button>
                     </div>
+                </div>
+
+                <!-- Overlay Sprite Forge (embedded external tool) -->
+                <div class="screen-overlay hidden" id="spriteforge-overlay" style="padding:0; gap:0;">
+                    <div style="width:100%; display:flex; align-items:center; justify-content:space-between; padding:8px 12px; background:#1e293b; border-bottom:1px solid #334155; box-sizing:border-box;">
+                        <div class="screen-title" style="color:#22d3ee; font-size:14px; margin:0;">⚒️ SPRITE FORGE</div>
+                        <button class="glowing-btn small-menu-btn" id="spriteforge-back-btn" style="margin:0;">← Back</button>
+                    </div>
+                    <iframe id="spriteforge-frame"
+                            title="Sprite Forge — pixel art sprite sheet converter"
+                            src="about:blank"
+                            data-src="https://archons-sprite-forge.surge.sh/"
+                            loading="lazy"
+                            referrerpolicy="no-referrer"
+                            sandbox="allow-scripts allow-downloads allow-same-origin"
+                            style="flex:1; width:100%; border:0; background:#0f172a; min-height:0;"></iframe>
                 </div>
 
                 <!-- Overlay What's New -->
@@ -418,6 +435,7 @@
     <script src="js/gameplay.js"></script>
     <script src="js/combat.js"></script>
     <script src="js/skills.js"></script>
+    <script src="js/skillfx.js"></script>
     <script src="js/turns.js"></script>
     <script src="js/items.js"></script>
     <script src="js/ui.js"></script>

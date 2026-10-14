@@ -40,6 +40,9 @@ function attachUIOverlayMethods(proto) {
             cdUlt.style.fontSize = '0.9rem';
         }
 
+        // Drive the SVG cooldown rings / ready-glow alongside the numeric text.
+        this.updateSkillIconStates();
+
         const p1 = document.getElementById('pot-hp-count');
         const p2 = document.getElementById('pot-mp-count');
         if (p1) p1.innerText = this.player.potions.hp;
@@ -298,7 +301,7 @@ function attachUIOverlayMethods(proto) {
     };
 
     proto.isMenuOverlayOpen = function() {
-        const menus = ['start-overlay', 'quiz-overlay', 'class-select-overlay', 'shop-overlay', 'anvil-overlay', 'forge-overlay', 'talent-overlay', 'route-choice-overlay', 'hub-overlay', 'bestiary-overlay', 'lore-overlay', 'history-overlay', 'achievements-overlay', 'settings-overlay', 'death-overlay', 'bossrush-victory-overlay', 'trial-victory-overlay', 'trials-select-overlay', 'whatsnew-overlay', 'mutator-select-overlay', 'epilogue-overlay'];
+        const menus = ['start-overlay', 'quiz-overlay', 'class-select-overlay', 'shop-overlay', 'anvil-overlay', 'forge-overlay', 'talent-overlay', 'route-choice-overlay', 'hub-overlay', 'bestiary-overlay', 'lore-overlay', 'history-overlay', 'achievements-overlay', 'settings-overlay', 'death-overlay', 'bossrush-victory-overlay', 'trial-victory-overlay', 'trials-select-overlay', 'whatsnew-overlay', 'spriteforge-overlay', 'mutator-select-overlay', 'epilogue-overlay'];
         return menus.some(id => {
             const el = document.getElementById(id);
             return el && !el.classList.contains('hidden') && id !== 'start-overlay';
