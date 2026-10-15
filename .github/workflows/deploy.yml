@@ -1,5 +1,5 @@
-# Builds the Vite app and publishes dist/ to GitHub Pages.
-# One-time setup: repo Settings > Pages > Build and deployment > Source = "GitHub Actions".
+# Builds the Vite app and publishes dist/ to GitHub Pages on every push to main.
+# Pages source must be "GitHub Actions" (Settings > Pages); the old legacy builder served the repo root unbuilt.
 name: Deploy to GitHub Pages
 
 on:
@@ -26,6 +26,8 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - name: Syntax-check engine modules
+        run: for f in src/game/*.js; do node --check "$f"; done
       - run: npm run build
       - uses: actions/upload-pages-artifact@v3
         with:
